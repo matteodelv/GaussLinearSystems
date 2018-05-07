@@ -70,7 +70,7 @@ highlightElementsTable[eqs_] := Module[{rowCount,colCount,incognite,coefficienti
 		AppendTo[eqData, Style[termineNoto, RGBColor[0.14,0.61,0.14]]];
 		eqsData = Append[eqsData, eqData];
 	];
-	Style[TableForm[eqsData,TableSpacing->{3,1}, TableAlignments->{Right,Left}],Large]
+	Style[TableForm[eqsData,TableSpacing->{3,1}, TableAlignments->{Right,Left}],30]
 ];
 
 highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
