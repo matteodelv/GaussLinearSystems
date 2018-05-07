@@ -17,7 +17,8 @@ ClearAll["GaussLinearSystemsPackage`*"];
 plotLinearSystem2::usage = "Permette di mostrare graficamente la soluzione di un sistema di due equazioni di primo grado in due incognite";
 plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un sistema di tre equazioni di primo grado in tre incognite";
 displayEquationSystem::usage = "";
-hightlightElementsTable::usage = "";
+highlightElementsTable::usage = "";
+highlightMatrixElements::usage = "";
 
 x::usage = "";
 y::usage = "";
@@ -51,7 +52,7 @@ displayEquationSystem[eqs_] := Module[{eqsFF},
 	DisplayForm@RowBox[{StyleBox["{", SpanMaxSize->Infinity], Column[eqsFF, Alignment->Left]}]
 ];
 
-hightlightElementsTable[eqs_] := Module[{rowCount,colCount,incognite,coefficienti,termineNoto},
+highlightElementsTable[eqs_] := Module[{rowCount,colCount,incognite,coefficienti,termineNoto},
 	rowCount = Length[eqs];
 	colCount=0;
 	eqsData = {};
@@ -70,6 +71,16 @@ hightlightElementsTable[eqs_] := Module[{rowCount,colCount,incognite,coefficient
 		eqsData = Append[eqsData, eqData];
 	];
 	Style[TableForm[eqsData,TableSpacing->{3,1}, TableAlignments->{Right,Left}],Large]
+];
+
+highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
+	lastCol = 1;
+	For[i=1,i<=Length[matrix],i++,
+		If[Length[matrix[[i]]] > lastCol,lastCol = Length[matrix[[i]]]];
+	];
+	editedMatrix = MapAt[Style[#,RGBColor[0.13,0.52,0.96]]&,matrix,{{Range[1,Length[matrix]],Range[1,lastCol-1]}}];
+	editedMatrix = MapAt[Style[#,RGBColor[0.14,0.61,0.14]]&,editedMatrix,{{Range[1,Length[matrix]],lastCol}}];
+	Return[editedMatrix];
 ];
 
 End[];
