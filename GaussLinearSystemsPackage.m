@@ -19,7 +19,10 @@ plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un
 displayEquationSystem::usage = "";
 highlightElementsTable::usage = "";
 highlightMatrixElements::usage = "";
+calculateMatrixDims::usage = "";
 transformToMatrix::usage = "";
+getRandomSystem::usage = "";
+exerciseSystemToMatrix::usage = "";
 
 x::usage = "";
 y::usage = "";
@@ -84,6 +87,27 @@ highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
 	Return[editedMatrix];
 ];
 
+calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
+	rows = Length[system];
+	lhsParts = Level[#,1][[1]] & /@ system;
+	cols = Length[Variables[lhsParts]]+1;
+	Return[{rows,cols}];
+];
+
+getRandomSystem[] := Module[{systems},
+	systems = {
+		{3x-2y==-1, 4x-5y==-2},
+		{5y+x==3, 2x-4y==-8},
+		{2x-5y==7, x-3y==1},
+		{2x-y==0, x+3y==1},
+		{z+3x-2y==0, z+x-y==0, 4x+2y-3z==5},
+		{x+y-z==6, y+x==3, x+z==0},
+		{3x+y+z==3, 6x-2y+z==1, 3y+3x+3z==7},
+		{x+3z+2y==1, 3x+4y+6z==3, 5y-3z+10x==-4}
+	};
+	Return[RandomChoice[systems]];
+];
+
 transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
 	If[withTerms,
 		system = Level[#,1][[1]] & /@ eqs;
@@ -106,6 +130,18 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 		AppendTo[matrix,row];
 	];
 	Return[matrix];
+];
+
+exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMatrix,inputMatrixShown,checkButton},
+	system = getRandomSystem[];
+	matrix = transformToMatrix[system,True];
+	dims = calculateMatrixDims[system];
+	rowCount = dims[[1]];
+	colCount = dims[[2]];
+	inputMatrix = ConstantArray[0,rowCount*colCount];
+	inputMatrixShown = Partition[Table[With[{i=i},InputField[Dynamic[inputMatrix[[i]]],FieldSize->{1,1}]],{i,rowCount*colCount}],colCount];
+	checkButton = Button["Verifica!", If[MatchQ[matrix,ArrayReshape[inputMatrix,dims]],MessageDialog["CORRETTO!"],MessageDialog["SBAGLIATO! Riprova!"]]];
+	Grid[{{displayEquationSystem[system],inputMatrixShown//MatrixForm,checkButton}}]
 ];
 
 End[];
