@@ -19,6 +19,7 @@ plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un
 displayEquationSystem::usage = "";
 highlightElementsTable::usage = "";
 highlightMatrixElements::usage = "";
+transformToMatrix::usage = "";
 
 x::usage = "";
 y::usage = "";
@@ -81,6 +82,30 @@ highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
 	editedMatrix = MapAt[Style[#,RGBColor[0.13,0.52,0.96]]&,matrix,{{Range[1,Length[matrix]],Range[1,lastCol-1]}}];
 	editedMatrix = MapAt[Style[#,RGBColor[0.14,0.61,0.14]]&,editedMatrix,{{Range[1,Length[matrix]],lastCol}}];
 	Return[editedMatrix];
+];
+
+transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
+	If[withTerms,
+		system = Level[#,1][[1]] & /@ eqs;
+		terms = Level[#,1][[2]] & /@ eqs,
+		system = eqs
+	];
+	incognite = Sort[Variables[system]];
+	rules = CoefficientRules[system,incognite];
+	matrix = {};
+	For[i=1,i<=Length[rules],i++,
+		row = {};
+		For[j=1,j<=Length[incognite],j++,
+			key = Normal[SparseArray[{j->1},Length[incognite]]];
+			If[MemberQ[Keys[rules[[i]]],key],
+				AppendTo[row,Lookup[rules[[i]],Key[key]]],
+				AppendTo[row,0]
+			];
+		];
+		If[withTerms,AppendTo[row,terms[[i]]]];
+		AppendTo[matrix,row];
+	];
+	Return[matrix];
 ];
 
 End[];
