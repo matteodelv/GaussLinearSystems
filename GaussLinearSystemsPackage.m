@@ -132,16 +132,35 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 	Return[matrix];
 ];
 
-exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMatrix,inputMatrixShown,checkButton},
+exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMatrix,inputMatrixShown,checkButton,restartButton,gridOptions},
 	system = getRandomSystem[];
 	matrix = transformToMatrix[system,True];
 	dims = calculateMatrixDims[system];
 	rowCount = dims[[1]];
 	colCount = dims[[2]];
 	inputMatrix = ConstantArray[0,rowCount*colCount];
-	inputMatrixShown = Partition[Table[With[{i=i},InputField[Dynamic[inputMatrix[[i]]],FieldSize->{1,1}]],{i,rowCount*colCount}],colCount];
-	checkButton = Button["Verifica!", If[MatchQ[matrix,ArrayReshape[inputMatrix,dims]],MessageDialog["CORRETTO!"],MessageDialog["SBAGLIATO! Riprova!"]]];
-	Grid[{{displayEquationSystem[system],inputMatrixShown//MatrixForm,checkButton}}]
+	inputMatrixShown = Partition[Table[With[{i=i},InputField[Dynamic[inputMatrix[[i]]],FieldSize->{2,1}]],{i,rowCount*colCount}],colCount];
+	checkButton = Button[Style["Verifica!",24], 
+		If[MatchQ[matrix,ArrayReshape[inputMatrix,dims]],
+			MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
+			MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]]
+		], ImageSize->{200,50}];
+	restartButton = Button[Style["Ricomincia!",24],
+		NotebookFind[EvaluationNotebook[], "exerciseSystemToMatrixCellTag",All,CellTags];
+		SelectionEvaluate[EvaluationNotebook[]],
+		ImageSize->{200,50}];
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->{{Right,Left}}
+	};
+	Grid[{
+		{displayEquationSystem[system],inputMatrixShown//MatrixForm},
+		{checkButton,restartButton}
+	}, gridOptions]
 ];
 
 End[];
