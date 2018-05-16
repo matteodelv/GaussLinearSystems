@@ -25,6 +25,7 @@ getRandomSystem::usage = "";
 exerciseSystemToMatrix::usage = "";
 exerciseTriangularizeMatrix::usage = "";
 fattorizzazioneLU::usage = "";
+exerciseMatrix::usage="";
 
 x::usage = "";
 y::usage = "";
@@ -110,6 +111,8 @@ getRandomSystem[] := Module[{systems},
 	Return[RandomChoice[systems]];
 ];
 
+
+
 transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
 	If[withTerms,
 		system = Level[#,1][[1]] & /@ eqs;
@@ -142,7 +145,7 @@ exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMa
 	colCount = dims[[2]];
 	inputMatrix = ConstantArray[0,rowCount*colCount];
 	inputMatrixShown = Partition[Table[With[{i=i},InputField[Dynamic[inputMatrix[[i]]],FieldSize->{2,1}]],{i,rowCount*colCount}],colCount];
-	checkButton = Button[Style["Verifica!",24], 
+	checkButton = Button[Style["Verifica!",24],
 		If[MatchQ[matrix,ArrayReshape[inputMatrix,dims]],
 			MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
 			MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]]
@@ -179,7 +182,7 @@ exerciseTriangularizeMatrix[system_] := Module[{systemMatrix,rows,cols,A,b,L,U,P
 
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
 	If[SameQ[Det[A],0]||Not[Equal[Length[A],Length[A[[All,1]]]]],Return[{Null,Null,Null,Null}]];
-	
+
 	n = Length[A];
 	matriceEdited = A;
 	P = IdentityMatrix[n];
@@ -211,9 +214,76 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 	Return[{L,U,P,bPerm}];
 ];
 
+exerciseMatrix[] := Module[{rowQuestion,columnQuestion,indexQuestion,indexTextQuestion,row,column,randomArray1,randomArray2,matrix, text,
+							answers,trueAnswer,question,index,ind,subscriptIndex,questionsList,radioAnswer,choice,gridOptions,positionRow,
+							positionColumn,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, printMatrix,checkButton,restartButton},
+	index = RandomSample[Range[4,6],2];
+	row = index[[1]];
+	column = index[[2]];
+	matrix = (row*column);
+	answers = {row, column, matrix, (row+column)};
+	questionsList = {
+		rowQuestion,
+		columnQuestion,
+		indexQuestion,
+		indexTextQuestion,
+	};
+	question = RandomChoice[questionsList];
+	text = StringReplace["Quante \!\(\*
+StyleBox[\"righe\",\nFontWeight->\"Bold\"]\) ci sono in una matrice NRighe X NColonne ?", {"NRighe"-> ToString[row],"NColonne"-> ToString[column]}];
+	positionRow = RandomInteger[{1,row}];
+	positionColumn = RandomInteger[{1,column}];
+	randomArray1 = RandomSample[Range[-15,15],matrix];
+	randomArray2 = ArrayReshape[randomArray1,{row,column}];
+	printMatrix = False;
+	Switch[question,
+			rowQuestion,
+				trueAnswer = row,
+			columnQuestion,
+				text= StringReplace[text, "righe"->"colonne"];
+				trueAnswer = column,
+			indexQuestion,
+				text= StringReplace["Nella matrice l'elemento x a cosa corrisponde ?","x"-> ToString[randomArray2[[positionRow,positionColumn]]]];
+				trueAnswer = Subscript["a",StringJoin[ToString[positionRow],ToString[positionColumn]]];
+				wrongAnswersRow = RandomSample[Tuples[Range[1,row],1],3];
+				wrongAnswersColumn = RandomSample[Tuples[DeleteCases[Range[1,column],positionColumn],1],3];
+				wrongAnswers = Join[wrongAnswersRow,wrongAnswersColumn,2];
+				ind = StringReplace["xy",{"x"->ToString[#[[1]]],"y"->ToString[#[[2]]]}] & /@ wrongAnswers;
+				subscriptIndex = Subscript["a","index"]/.{"index"->#} & /@ ind;
+				answers = Flatten[{trueAnswer, subscriptIndex}];
+				printMatrix = True,
+			indexTextQuestion,
+				ind = Subscript["a",StringJoin[ToString[positionRow],ToString[positionColumn]]];
+				text = StringReplace["Nella matrice l'elemento x a cosa corrisponde?", "x"->ind];
+				trueAnswer = randomArray2[[positionRow,positionColumn]];
+				wrongAnswers = RandomSample[Tuples[DeleteCases[randomArray1,trueAnswer],1],3];
+				answers = Flatten[{trueAnswer, wrongAnswers}];
+				printMatrix = True
+	];
+	answers = RandomSample[answers];
+	radioAnswer= RadioButtonBar[Dynamic[choice],answers, Appearance->"Vertical"];
+	checkButton = Button[Style["Verifica!",24],
+	If[MatchQ[choice,trueAnswer],
+		MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
+		MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]]
+	], ImageSize->{200,50}];
+	restartButton = Button[Style["Nuova domanda",24],
+		NotebookFind[EvaluationNotebook[], "questionMatrixTag",All,CellTags];
+		SelectionEvaluate[EvaluationNotebook[]],
+		ImageSize->{300,50}];
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->{{Left,Left}}
+	};
+	If[printMatrix,
+		Grid[{{text,SpanFromLeft},{radioAnswer,randomArray2//MatrixForm},{restartButton,checkButton}}, gridOptions],
+		Grid[{{text,SpanFromLeft},{radioAnswer,SpanFromLeft},{restartButton,checkButton}}, gridOptions]
+	]
+];
 End[];
 Protect["GaussLinearSystemsPackage`*"]
 EndPackage[];
-
-
- 
