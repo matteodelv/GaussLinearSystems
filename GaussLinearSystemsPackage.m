@@ -23,6 +23,8 @@ calculateMatrixDims::usage = "";
 transformToMatrix::usage = "";
 getRandomSystem::usage = "";
 exerciseSystemToMatrix::usage = "";
+exerciseTriangularizeMatrix::usage = "";
+fattorizzazioneLU::usage = "";
 
 x::usage = "";
 y::usage = "";
@@ -163,6 +165,55 @@ exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMa
 	}, gridOptions]
 ];
 
+exerciseTriangularizeMatrix[system_] := Module[{systemMatrix,rows,cols,A,b,L,U,P,newB},
+	systemMatrix = transformToMatrix[system,True];
+	{rows,cols} = calculateMatrixDims[systemMatrix];
+	Print[systemMatrix//MatrixForm];
+	A = Drop[systemMatrix, None, -1];
+	b = Take[systemMatrix, All, -1];
+	Print["A = ", A//MatrixForm, " b = ", b//MatrixForm];
+	{L,U,P,newB} = fattorizzazioneLU[A,b];
+	Print["U = ", U//MatrixForm, " b' = ", newB//MatrixForm, " PA = ", P.A//MatrixForm, " LU = ", L.U//MatrixForm];
+	Print["Soluzioni Ax = b: ",LinearSolve[A,b]//MatrixForm, " Soluzioni Ux = b': ",LinearSolve[U,newB]//MatrixForm];
+];
+
+fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
+	If[SameQ[Det[A],0]||Not[Equal[Length[A],Length[A[[All,1]]]]],Return[{Null,Null,Null,Null}]];
+	
+	n = Length[A];
+	matriceEdited = A;
+	P = IdentityMatrix[n];
+	L = ArrayReshape[ConstantArray[0,n*n],{n, n}];
+	For[i=1,i<n,i++,
+		subColonna = matriceEdited[[All,i]][[i;;]];
+		candidatePivot = Max[Abs[subColonna]];
+		pivotIndex = FirstPosition[Abs[matriceEdited[[All,i]]][[i;;]],candidatePivot][[1]];
+		pivotIndex = pivotIndex+i-1;
+		pivot=matriceEdited[[pivotIndex,i]];
+		If[Not[Equal[i,pivotIndex]],
+			matriceEdited = Permute[matriceEdited,Cycles[{{i,pivotIndex}}]];
+			P = Permute[P, Cycles[{Flatten[{i,pivotIndex}]}]];
+		];
+		For[k=i+1,k<=n,k++,
+			If[Not[Equal[matriceEdited[[k,i]],0]],
+				lambda = (matriceEdited[[k,i]]/pivot);
+				L[[k,i]] = lambda;
+				matriceEdited[[k]] = matriceEdited[[k]]-lambda*matriceEdited[[i]];
+			];
+		];
+		If[Not[Equal[i,pivotIndex]]&&i>=2,
+			L[[i;;n,1;;i-1]]=Permute[L[[i;;n,1;;i-1]],Cycles[{{1,pivotIndex-i+1}}]];
+		];
+	];
+	U = matriceEdited;
+	L=L+IdentityMatrix[n];
+	bPerm = Inverse[L].P.b;
+	Return[{L,U,P,bPerm}];
+];
+
 End[];
 Protect["GaussLinearSystemsPackage`*"]
 EndPackage[];
+
+
+ 
