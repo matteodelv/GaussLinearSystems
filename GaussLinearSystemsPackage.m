@@ -165,16 +165,45 @@ exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMa
 	}, gridOptions]
 ];
 
-exerciseTriangularizeMatrix[system_] := Module[{systemMatrix,rows,cols,A,b,L,U,P,newB},
+exerciseTriangularizeMatrix[system_] := Module[{systemMatrix,rows,cols,A,b,L,U,P,newB,UFlattened,shown,okColor,wrongColor,inputMatrix,inputMatrixShown},
 	systemMatrix = transformToMatrix[system,True];
-	{rows,cols} = calculateMatrixDims[systemMatrix];
-	Print[systemMatrix//MatrixForm];
+	{rows,cols} = calculateMatrixDims[system];
 	A = Drop[systemMatrix, None, -1];
 	b = Take[systemMatrix, All, -1];
-	Print["A = ", A//MatrixForm, " b = ", b//MatrixForm];
-	{L,U,P,newB} = fattorizzazioneLU[A,b];
-	Print["U = ", U//MatrixForm, " b' = ", newB//MatrixForm, " PA = ", P.A//MatrixForm, " LU = ", L.U//MatrixForm];
-	Print["Soluzioni Ax = b: ",LinearSolve[A,b]//MatrixForm, " Soluzioni Ux = b': ",LinearSolve[U,newB]//MatrixForm];
+	{L,U,P,newB} = fattorizzazioneLU[A,b];(* AGGIUNGERE CONTROLLO RISULTATO NON NULL *)
+	UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
+	shown = False;
+	okColor = RGBColor[0,1,0,0.4];
+	wrongColor = RGBColor[1,0,0,0.4];
+	inputMatrix2 = ConstantArray[0, rows*cols];
+	inputMatrixShown2 = Partition[Table[With[{i=i},
+		Dynamic[Framed[InputField[Dynamic[inputMatrix2[[i]]],FieldSize->{2,1},Appearance->"Frameless",
+		Background->If[shown,If[SameQ[inputMatrix2[[i]],UFlattened[[i]]],okColor,wrongColor],White]],
+		FrameStyle->If[shown,If[SameQ[inputMatrix2[[i]],UFlattened[[i]]],okColor,wrongColor],Automatic],FrameMargins->None]]],{i,rows*cols}],cols];
+	For[i=2,i<=Length[inputMatrixShown2],i++,
+		inputMatrixShown2[[i]][[1;;i-1]]=0;
+	];
+	checkButton = Button[Style["Verifica!",24], shown=False;
+		If[MatchQ[inputMatrix2,UFlattened],
+			MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
+			MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]];shown=True;
+		], ImageSize->{200,50}];
+	restartButton = Button[Style["Ricomincia!",24],shown=False;
+		NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
+		SelectionEvaluate[EvaluationNotebook[]],
+		ImageSize->{200,50}];
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->{{Right,Left}}
+	};
+	Grid[{
+		{systemMatrix//MatrixForm,inputMatrixShown2//MatrixForm},
+		{checkButton,restartButton}
+	}, gridOptions]
 ];
 
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
@@ -214,6 +243,3 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 End[];
 Protect["GaussLinearSystemsPackage`*"]
 EndPackage[];
-
-
- 
