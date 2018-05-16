@@ -111,8 +111,6 @@ getRandomSystem[] := Module[{systems},
 	Return[RandomChoice[systems]];
 ];
 
-
-
 transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
 	If[withTerms,
 		system = Level[#,1][[1]] & /@ eqs;
@@ -137,20 +135,44 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 	Return[matrix];
 ];
 
-exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMatrix,inputMatrixShown,checkButton,restartButton,gridOptions},
+exerciseSystemToMatrix[] := Module[
+	{system, matrix, dims, rowCount, colCount, inputMatrix, inputMatrixShown, checkButton, restartButton, gridOptions,
+	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText},
+	
 	system = getRandomSystem[];
+	{rowCount,colCount} = calculateMatrixDims[system];
 	matrix = transformToMatrix[system,True];
-	dims = calculateMatrixDims[system];
-	rowCount = dims[[1]];
-	colCount = dims[[2]];
+	matrix = Flatten[matrix];
 	inputMatrix = ConstantArray[0,rowCount*colCount];
-	inputMatrixShown = Partition[Table[With[{i=i},InputField[Dynamic[inputMatrix[[i]]],FieldSize->{2,1}]],{i,rowCount*colCount}],colCount];
+	inputMatrixShown = Partition[
+		Table[With[{i=i},
+			Dynamic[Framed[
+				InputField[Dynamic[inputMatrix[[i]]], FieldSize->{2,1}, Appearance->"Frameless",
+					Background->If[shown,
+						If[SameQ[inputMatrix[[i]],matrix[[i]]], okColor, wrongColor],
+						White]
+					],
+					FrameStyle->If[shown,
+						If[SameQ[inputMatrix[[i]],matrix[[i]]], okColor, wrongColor],
+						Automatic],
+					FrameMargins->None
+				]]
+			], {i,rowCount*colCount}
+		], colCount];
 	checkButton = Button[Style["Verifica!",24],
-		If[MatchQ[matrix,ArrayReshape[inputMatrix,dims]],
-			MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
-			MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]]
-		], ImageSize->{200,50}];
+		shown=False;
+		If[MatchQ[matrix,inputMatrix],
+			dialogImage = Import["images/checkmark.png"];
+			dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+			dialogImage = Import["images/error.png"];
+			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+			shown=True;
+		];
+		MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+			Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
+		ImageSize->{200,50}];
 	restartButton = Button[Style["Ricomincia!",24],
+		shown=False;
 		NotebookFind[EvaluationNotebook[], "exerciseSystemToMatrixCellTag",All,CellTags];
 		SelectionEvaluate[EvaluationNotebook[]],
 		ImageSize->{200,50}];
@@ -168,45 +190,67 @@ exerciseSystemToMatrix[] := Module[{system,matrix,dims,rowCount,colCount,inputMa
 	}, gridOptions]
 ];
 
-exerciseTriangularizeMatrix[system_] := Module[{systemMatrix,rows,cols,A,b,L,U,P,newB,UFlattened,shown,okColor,wrongColor,inputMatrix,inputMatrixShown},
+exerciseTriangularizeMatrix[system_] := Module[
+	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4], 
+	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButton, restartButton, gridOptions},
+	
 	systemMatrix = transformToMatrix[system,True];
 	{rows,cols} = calculateMatrixDims[system];
 	A = Drop[systemMatrix, None, -1];
 	b = Take[systemMatrix, All, -1];
 	{L,U,P,newB} = fattorizzazioneLU[A,b];(* AGGIUNGERE CONTROLLO RISULTATO NON NULL *)
-	UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
-	shown = False;
-	okColor = RGBColor[0,1,0,0.4];
-	wrongColor = RGBColor[1,0,0,0.4];
-	inputMatrix2 = ConstantArray[0, rows*cols];
-	inputMatrixShown2 = Partition[Table[With[{i=i},
-		Dynamic[Framed[InputField[Dynamic[inputMatrix2[[i]]],FieldSize->{2,1},Appearance->"Frameless",
-		Background->If[shown,If[SameQ[inputMatrix2[[i]],UFlattened[[i]]],okColor,wrongColor],White]],
-		FrameStyle->If[shown,If[SameQ[inputMatrix2[[i]],UFlattened[[i]]],okColor,wrongColor],Automatic],FrameMargins->None]]],{i,rows*cols}],cols];
-	For[i=2,i<=Length[inputMatrixShown2],i++,
-		inputMatrixShown2[[i]][[1;;i-1]]=0;
-	];
-	checkButton = Button[Style["Verifica!",24], shown=False;
-		If[MatchQ[inputMatrix2,UFlattened],
-			MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
-			MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]];shown=True;
-		], ImageSize->{200,50}];
-	restartButton = Button[Style["Ricomincia!",24],shown=False;
-		NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
-		SelectionEvaluate[EvaluationNotebook[]],
-		ImageSize->{200,50}];
-	gridOptions = {
-		Frame->All,
-		FrameStyle->RGBColor[0.94,0.94,0.94],
-		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
-		Spacings->{10,3},
-		ItemSize->Fit,
-		Alignment->{{Right,Left}}
-	};
-	Grid[{
-		{systemMatrix//MatrixForm,inputMatrixShown2//MatrixForm},
-		{checkButton,restartButton}
-	}, gridOptions]
+	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]],
+		(* Gestire caso sistema indeterminato o impossibile *),
+		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
+		inputMatrix = ConstantArray[0, rows*cols];
+		inputMatrixShown = Partition[
+			Table[With[{i=i},
+				Dynamic[Framed[
+					InputField[Dynamic[inputMatrix[[i]]],FieldSize->{2,1},Appearance->"Frameless",
+						Background->If[shown,
+							If[SameQ[inputMatrix[[i]],UFlattened[[i]]],okColor,wrongColor],
+							White]
+						],
+						FrameStyle->If[shown,
+							If[SameQ[inputMatrix[[i]],UFlattened[[i]]],okColor,wrongColor],
+							Automatic],
+						FrameMargins->None
+					]]
+				], {i,rows*cols}
+			],cols];
+		For[i=2,i<=Length[inputMatrixShown],i++,
+			inputMatrixShown[[i]][[1;;i-1]]=0;
+		];
+		checkButton = Button[Style["Verifica!",24],
+			shown=False;
+			If[MatchQ[UFlattened,inputMatrix],
+				dialogImage = Import["images/checkmark.png"];
+				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+				dialogImage = Import["images/error.png"];
+				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+				shown=True;
+			];
+			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
+			ImageSize->{200,50}];
+		restartButton = Button[Style["Ricomincia!",24],
+			shown=False;
+			NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
+			SelectionEvaluate[EvaluationNotebook[]],
+			ImageSize->{200,50}];
+		gridOptions = {
+			Frame->All,
+			FrameStyle->RGBColor[0.94,0.94,0.94],
+			ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+			Spacings->{10,3},
+			ItemSize->Fit,
+			Alignment->{{Right,Left}}
+		};
+		Grid[{
+			{systemMatrix//MatrixForm,inputMatrixShown//MatrixForm},
+			{checkButton,restartButton}
+		}, gridOptions]
+	]
 ];
 
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
@@ -221,7 +265,7 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 		candidatePivot = Max[Abs[subColonna]];
 		pivotIndex = FirstPosition[Abs[matriceEdited[[All,i]]][[i;;]],candidatePivot][[1]];
 		pivotIndex = pivotIndex+i-1;
-		pivot=matriceEdited[[pivotIndex,i]];
+		pivot = matriceEdited[[pivotIndex,i]];
 		If[Not[Equal[i,pivotIndex]],
 			matriceEdited = Permute[matriceEdited,Cycles[{{i,pivotIndex}}]];
 			P = Permute[P, Cycles[{Flatten[{i,pivotIndex}]}]];
