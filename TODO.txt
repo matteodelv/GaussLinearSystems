@@ -15,6 +15,8 @@ TODO Rimanenti:
 - aggiornare le slides considerando L'ORDINE ALFABETICO DELLE INCOGNITE (soprattutto in una delle prime slides)
 - finire esercizi intermedi
 - finire esercizio finale
+- commentare il package!!!!
+- aggiungere le initialization cells
 
 
 Aggiungete sotto qualsiasi altra cosa vi venga in mente!

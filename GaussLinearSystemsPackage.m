@@ -23,6 +23,7 @@ calculateMatrixDims::usage = "";
 transformToMatrix::usage = "";
 getRandomSystem::usage = "";
 exerciseSystemToMatrix::usage = "";
+exerciseReducedMatrixToSystem::usage = "";
 exerciseTriangularizeMatrix::usage = "";
 fattorizzazioneLU::usage = "";
 exerciseMatrix::usage="";
@@ -186,6 +187,75 @@ exerciseSystemToMatrix[] := Module[
 	};
 	Grid[{
 		{displayEquationSystem[system],inputMatrixShown//MatrixForm},
+		{checkButton,restartButton}
+	}, gridOptions]
+];
+
+exerciseReducedMatrixToSystem[] := Module[
+	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, newB, matrix, rows, checkButton, cols, prova,
+	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False, backup,provaMatrice, restartButton, gridOptions, dialogImage, dialogText},
+	
+	randomSystem = getRandomSystem[];
+	{rows, cols} = calculateMatrixDims[randomSystem];
+	matrix = transformToMatrix[randomSystem,True];
+	
+	A = Drop[matrix, None, -1];
+	b = Take[matrix, All, -1];
+	{L,U,P,newB} = fattorizzazioneLU[A,b];
+	reducedMatrix = Join[U, ArrayReshape[newB,{rows,1}],2];
+	prova = ConstantArray[Null, rows];
+	provaMatrice = ArrayReshape[ConstantArray[0,rows*cols],{rows, cols}];
+	
+	inputSystem = ConstantArray[Null, rows];
+	inputSystemShown = Partition[
+			Table[With[{i=i},
+				Dynamic[Framed[
+					InputField[Dynamic[inputSystem[[i]]], String,FieldSize->{15,1},Appearance->"Frameless",
+						Background->If[shown,
+							If[SameQ[reducedMatrix[[i]],provaMatrice[[i]]],RGBColor[0,1,0,0.4],RGBColor[1,0,0,0.4]],
+							White]
+						],
+						FrameStyle->If[shown,
+							If[SameQ[reducedMatrix[[i]],provaMatrice[[i]]],RGBColor[0,1,0,0.4],RGBColor[1,0,0,0.4]],
+							Automatic],
+						FrameMargins->None
+					]]
+				], {i,rows}
+			],1];
+	checkButton = Button[Style["Verifica!",24],
+		If[Not[MemberQ[inputSystem, Null]],
+			prova = StringReplace[#, "=" -> "\[Equal]"] & @ inputSystem;
+			prova = ToExpression[#] & @ prova;
+			provaMatrice = transformToMatrix[prova, True];
+			If[MatchQ[reducedMatrix,provaMatrice],
+				dialogImage = Import["images/checkmark.png"];
+				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+				dialogImage = Import["images/error.png"];
+				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+			],
+			dialogImage = Import["images/error.png"];
+			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+		];
+		MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]];
+		shown = True,
+		ImageSize->{200,50}
+	];
+	restartButton = Button[Style["Ricomincia!",24],
+		shown=False;
+		NotebookFind[EvaluationNotebook[], "exerciseReducedMatrixToSystemCellTag",All,CellTags];
+		SelectionEvaluate[EvaluationNotebook[]],
+		ImageSize->{200,50}];	
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->{{Right,Left}}
+	};
+	Grid[{
+		{reducedMatrix//MatrixForm,inputSystemShown//MatrixForm},
 		{checkButton,restartButton}
 	}, gridOptions]
 ];
