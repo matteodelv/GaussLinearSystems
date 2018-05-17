@@ -1,0 +1,20 @@
+TODO Rimanenti:
+- fare bibliografia e problemi riscontrati
+- sistemare gli stili di titoli e sottotitoli
+- trasformare il notebook in slides
+- generalizzare le funzioni degli esercizi nela package per riusarle nell'esercizio finale (step by step)
+- sistemare tutti i tag delle slides
+- creare funzione per mostrare i tasti di navigazione
+- fare la foto del gruppo
+- togliere le immagini nel notebook e sostituirle con Import
+- dividere funzione sistemi random per discriminare tra risolvibili e non
+- integrare le slides di Gauss
+- finire la navigazione per gli indirizzi
+- fare la slide iniziale per scegliere il tipo di esercizio da fare
+- sostituire le immagini nella lavagna con le nuove fatte da Sara
+- aggiornare le slides considerando L'ORDINE ALFABETICO DELLE INCOGNITE (soprattutto in una delle prime slides)
+- finire esercizi intermedi
+- finire esercizio finale
+
+
+Aggiungete sotto qualsiasi altra cosa vi venga in mente!
