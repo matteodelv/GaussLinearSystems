@@ -1,0 +1,13 @@
+*Dare nome alle mosse: la seconda dece essere chiamata "combinazione lineare"
+*Cambiare le scritte gialle
+*Nella slide in cui si spiega la seconda mossa utilizzare R1 e R2 nel testo della regola. in questo modo si dovrebbe semplificare
+*Togliere "prima di iniziare" nello step 1 della prima colonna
+*Bisogna spiegare meglio la mossa 1: per lei la mossa 1 è cercare e posizionare il pivot giusto al posto giusto quindi vuole spiegato bene che lo scambio di righe può essere fatto oppure no.
+*Mettere step 2.1, 2.2, 2.3, ... per spiegare che lo step 2 in realtà consiste nell'annullare tutti gli elementi sotto il pivot. Visto che abbiamo usato lo step 2 per ogni combinazione lineare lei vuole specificata la riga. 
+*Tutte le volte che c'è step 1 specificare da qualche parte il numero di colonna
+*Mettere il numero di slide nel quale siamo così da capire l'avanzamento nel progetto
+*Sistemare i cerchi degli elementi da annullare: cerchi solo per elementi sotto al pivot, gli altri elementi della riga sono da riquadrare con un rettangolo o con simboli diversi
+*Sistemare la parte con i sistemi impossibili e indeterminati. Lei vorrebbe che si capisse che sono due slide per ogni tipo di sistema (non lo aveva colto)
+*Specificare nei problemi informatici che x+y=c in matematica è diverso che scrivere x+y-c=0
+*Specificare nei problemi che, se la matrice è indeterminata o impossibile la funzione LU calcola subito il determinante e restituisce tutti null. Non capita mai quindi di trovare il pivot = 0
+*La parte con la risoluzione dei sistemi per sostituzione all'indietro è da riordinare in base allo schema che ci ha lasciato.
