@@ -25,6 +25,7 @@ getRandomSystem::usage = "";
 exerciseSystemToMatrix::usage = "";
 exerciseReducedMatrixToSystem::usage = "";
 exerciseTriangularizeMatrix::usage = "";
+exerciseFinalGauss::usage = "";
 fattorizzazioneLU::usage = "";
 exerciseMatrix::usage="";
 
@@ -39,8 +40,8 @@ Off[General::shdw];
 SetDirectory[NotebookDirectory[]];
 
 plotLinearSystem2[eq1_, eq2_] := Module[{solutions, points},
-	solutions = Solve[{eq1,eq2},{x,y},Reals];
-	points = {Blue, PointSize[Large], Point[{x,y} /. solutions]};
+	solutions = Solve[{eq1,eq2}];
+	points = {Blue, PointSize[Large], Point[{x,y}/.solutions]};
 	plotEq1 = Plot[y /. Solve[eq1], {x,-10,10},AspectRatio->1,PlotStyle->Red,PlotLegends->{eq1//TraditionalForm}];
 	plotEq2 = Plot[y /. Solve[eq2], {x,-10,10},AspectRatio->1,PlotStyle->Orange,PlotLegends->{eq2//TraditionalForm}];
 	Show[plotEq1, plotEq2, Graphics[{points}], ImageSize->400,Background->White]
@@ -136,7 +137,7 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 	Return[matrix];
 ];
 
-exerciseSystemToMatrix[] := Module[
+exerciseSystemToMatrix[] := DynamicModule[
 	{system, matrix, dims, rowCount, colCount, inputMatrix, inputMatrixShown, checkButton, restartButton, gridOptions,
 	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText},
 	
@@ -191,7 +192,7 @@ exerciseSystemToMatrix[] := Module[
 	}, gridOptions]
 ];
 
-exerciseReducedMatrixToSystem[] := Module[
+exerciseReducedMatrixToSystem[] := DynamicModule[
 	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, newB, matrix, rows, checkButton, cols, prova,
 	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False, backup,provaMatrice, restartButton, gridOptions, dialogImage, dialogText},
 	
@@ -260,7 +261,7 @@ exerciseReducedMatrixToSystem[] := Module[
 	}, gridOptions]
 ];
 
-exerciseTriangularizeMatrix[system_] := Module[
+exerciseTriangularizeMatrix[system_] := DynamicModule[
 	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4], 
 	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButton, restartButton, gridOptions},
 	
@@ -268,7 +269,7 @@ exerciseTriangularizeMatrix[system_] := Module[
 	{rows,cols} = calculateMatrixDims[system];
 	A = Drop[systemMatrix, None, -1];
 	b = Take[systemMatrix, All, -1];
-	{L,U,P,newB} = fattorizzazioneLU[A,b];(* AGGIUNGERE CONTROLLO RISULTATO NON NULL *)
+	{L,U,P,newB} = fattorizzazioneLU[A,b];
 	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]],
 		(* Gestire caso sistema indeterminato o impossibile *),
 		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
@@ -357,9 +358,9 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 	Return[{L,U,P,bPerm}];
 ];
 
-exerciseMatrix[] := Module[{rowQuestion,columnQuestion,indexQuestion,indexTextQuestion,row,column,randomArray1,randomArray2,matrix, text,
+exerciseMatrix[] := DynamicModule[{rowQuestion,columnQuestion,indexQuestion,indexTextQuestion,row,column,randomArray1,randomArray2,matrix, text,
 							answers,trueAnswer,question,index,ind,subscriptIndex,questionsList,radioAnswer,choice,gridOptions,positionRow,
-							positionColumn,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, printMatrix,checkButton,restartButton},
+							positionColumn,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, printMatrix,checkButton,restartButton,dialogImage,dialogText},
 	index = RandomSample[Range[4,6],2];
 	row = index[[1]];
 	column = index[[2]];
@@ -406,10 +407,15 @@ StyleBox[\"righe\",\nFontWeight->\"Bold\"]\) ci sono in una matrice NRighe X NCo
 	answers = RandomSample[answers];
 	radioAnswer= RadioButtonBar[Dynamic[choice],answers, Appearance->"Vertical"];
 	checkButton = Button[Style["Verifica!",24],
-	If[MatchQ[choice,trueAnswer],
-		MessageDialog[Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]]],
-		MessageDialog[Style["SBAGLIATO. Riprova!",20,Red]]
-	], ImageSize->{200,50}];
+		If[MatchQ[choice,trueAnswer],
+			dialogImage = Import["images/checkmark.png"];
+			dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+			dialogImage = Import["images/error.png"];
+			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+		];
+		MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+			Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
+		ImageSize->{200,50}];
 	restartButton = Button[Style["Nuova domanda",24],
 		NotebookFind[EvaluationNotebook[], "questionMatrixTag",All,CellTags];
 		SelectionEvaluate[EvaluationNotebook[]],
@@ -427,6 +433,11 @@ StyleBox[\"righe\",\nFontWeight->\"Bold\"]\) ci sono in una matrice NRighe X NCo
 		Grid[{{text,SpanFromLeft},{radioAnswer,SpanFromLeft},{restartButton,checkButton}}, gridOptions]
 	]
 ];
+
+exerciseFinalGauss[] := DynamicModule[{},
+	Return[Null]; (* TODO *)
+];
+
 End[];
 Protect["GaussLinearSystemsPackage`*"]
 EndPackage[];
