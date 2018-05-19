@@ -256,7 +256,7 @@ exerciseReducedMatrixToSystem[] := DynamicModule[
 		Alignment->{{Right,Left}}
 	};
 	Grid[{
-		{reducedMatrix//MatrixForm,inputSystemShown//MatrixForm},
+		{highlightMatrixElements[reducedMatrix]//MatrixForm,inputSystemShown//MatrixForm},
 		{checkButton,restartButton}
 	}, gridOptions]
 ];
@@ -318,7 +318,7 @@ exerciseTriangularizeMatrix[system_] := DynamicModule[
 			Alignment->{{Right,Left}}
 		};
 		Grid[{
-			{systemMatrix//MatrixForm,inputMatrixShown//MatrixForm},
+			{highlightMatrixElements[systemMatrix]//MatrixForm,inputMatrixShown//MatrixForm},
 			{checkButton,restartButton}
 		}, gridOptions]
 	]

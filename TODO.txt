@@ -1,6 +1,5 @@
 TODO Rimanenti:
 - fare bibliografia e problemi riscontrati
-- sistemare gli stili di titoli e sottotitoli
 - trasformare il notebook in slides
 - generalizzare le funzioni degli esercizi nela package per riusarle nell'esercizio finale (step by step)
 - sistemare tutti i tag delle slides
@@ -25,7 +24,6 @@ Aggiungete sotto qualsiasi altra cosa vi venga in mente!
 - decisioni stilistiche in fondo
 - fattorizzazione LU assume di conoscere che il determinante è diverso da 0 (da scrivere nelle osservazioni informatiche)
 - sistemare gli usage nell package
-- aggiungere colorazione coefficienti e termini noti alle matrici complete negli esercizi
 
 Correzioni rimanenti:
 - Bisogna spiegare meglio la mossa 1: per lei la mossa 1 è cercare e posizionare il pivot giusto al posto giusto quindi vuole spiegato bene che lo scambio di righe può essere fatto oppure no
