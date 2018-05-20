@@ -1,4 +1,4 @@
-TODO Rimanenti:
+﻿TODO Rimanenti:
 - trasformare il notebook in slides
 - generalizzare le funzioni degli esercizi nela package per riusarle nell'esercizio finale (step by step)
 - fare la foto del gruppo
@@ -6,8 +6,6 @@ TODO Rimanenti:
 - dividere funzione sistemi random per discriminare tra risolvibili e non (mancano i sistemi di Sara)
 - integrare le slides di Gauss (prima parte fatta)
 - finire la navigazione per gli esercizi (manca l'altra parte di Gauss)
-- fare la slide iniziale per scegliere il tipo di esercizio da fare
-- sostituire le immagini nella lavagna con le nuove fatte da Sara
 - aggiornare le slides considerando L'ORDINE ALFABETICO DELLE INCOGNITE (soprattutto in una delle prime slides)
 - finire esercizi intermedi (mancano domande sui pivot e mosse Gauss)
 - finire esercizio finale
@@ -16,8 +14,6 @@ TODO Rimanenti:
 
 Aggiungete sotto qualsiasi altra cosa vi venga in mente!
 
-
-- A chi è indirizzato nell'appendice
 - decisioni stilistiche in fondo
 
 Correzioni rimanenti:
@@ -26,4 +22,3 @@ Correzioni rimanenti:
 - Mettere il numero di slide nel quale siamo così da capire l'avanzamento nel progetto
 - Sistemare i cerchi degli elementi da annullare: cerchi solo per elementi sotto al pivot, gli altri elementi della riga sono da riquadrare con un rettangolo o con simboli diversi
 - Sistemare la parte con i sistemi impossibili e indeterminati. Lei vorrebbe che si capisse che sono due slide per ogni tipo di sistema (non lo aveva colto)
-- La parte con la risoluzione dei sistemi per sostituzione all'indietro è da riordinare in base allo schema che ci ha lasciato
