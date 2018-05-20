@@ -16,17 +16,17 @@ ClearAll["GaussLinearSystemsPackage`*"];
 
 plotLinearSystem2::usage = "Permette di mostrare graficamente la soluzione di un sistema di due equazioni di primo grado in due incognite";
 plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un sistema di tre equazioni di primo grado in tre incognite";
-displayEquationSystem::usage = "";
-highlightElementsTable::usage = "";
-highlightMatrixElements::usage = "";
-calculateMatrixDims::usage = "";
-transformToMatrix::usage = "";
-getRandomSystem::usage = "";
-exerciseSystemToMatrix::usage = "";
-exerciseReducedMatrixToSystem::usage = "";
-exerciseTriangularizeMatrix::usage = "";
-exerciseFinalGauss::usage = "";
-fattorizzazioneLU::usage = "";
+displayEquationSystem::usage = "Permette la visualizzazione di una lista di equazioni sotto forma di sistema";
+highlightElementsTable::usage = "Partendo da un sistema di equazioni, genera una tabella contenente coefficienti, incognite e termini noti, opportunamente evidenziati e colorati";
+highlightMatrixElements::usage = "Applica gli stili ad una matrice per evidenziare coefficienti e termini noti";
+calculateMatrixDims::usage = "Restituisce la dimensioni (righe, colonne) di una matrice";
+transformToMatrix::usage = "Partendo da un sistema di equazioni, restituisce la matrice associata";
+getRandomSystem::usage = "Restituisce un sistema di equazioni random tra quelli presenti nel dataset";
+exerciseSystemToMatrix::usage = "Mostra l'esercizio in cui viene visualizzato un sistema di equazioni random e l'utente deve trasformarlo nella matrice associata";
+exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in un viene visualizzato un sistema di equazioni ridotto con Gauss e l'utente deve ricostruire il sistema ridotto associato";
+exerciseTriangularizeMatrix::usage = "Mostra l'esercizio in cui viene visualizzata una matrice (relativa ad un sistema random) e l'utente deve applicare il Metodo di Gauss per inserire la matrice ridotta associata";
+exerciseFinalGauss::usage = "Mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo";
+fattorizzazioneLU::usage = "Implementazione della Fattorizzazione LU con pivoting parziale. Partendo da una matrice quadrata A ed un vettore b, ritorna le matrici L ed U, la matrice di permutazione P ed il vettore b' permutato";
 exerciseMatrix::usage="";
 
 x::usage = "";
