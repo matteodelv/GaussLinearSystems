@@ -2,9 +2,8 @@
 - trasformare il notebook in slides
 - generalizzare le funzioni degli esercizi nela package per riusarle nell'esercizio finale (step by step)
 - fare la foto del gruppo
-- togliere le immagini nel notebook e sostituirle con Import (da finire)
+- togliere le immagini nel notebook e sostituirle con Import (quasi finito, mancano alcune immagini)
 - dividere funzione sistemi random per discriminare tra risolvibili e non (mancano i sistemi di Sara)
-- integrare le slides di Gauss (prima parte fatta)
 - finire la navigazione per gli esercizi (manca l'altra parte di Gauss)
 - aggiornare le slides considerando L'ORDINE ALFABETICO DELLE INCOGNITE (soprattutto in una delle prime slides)
 - finire esercizi intermedi (mancano domande sui pivot e mosse Gauss)
