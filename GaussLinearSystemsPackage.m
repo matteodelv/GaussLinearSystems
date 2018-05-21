@@ -27,8 +27,12 @@ exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in un viene visualizz
 exerciseTriangularizeMatrix::usage = "Mostra l'esercizio in cui viene visualizzata una matrice (relativa ad un sistema random) e l'utente deve applicare il Metodo di Gauss per inserire la matrice ridotta associata";
 exerciseFinalGauss::usage = "Mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo";
 fattorizzazioneLU::usage = "Implementazione della Fattorizzazione LU con pivoting parziale. Partendo da una matrice quadrata A ed un vettore b, ritorna le matrici L ed U, la matrice di permutazione P ed il vettore b' permutato";
-exerciseMatrix::usage="";
-
+diagonalMatrixQuestion::usage="Domanda: Trovare la diagonale di una matrice";
+rowColumnQuestion::usage="Domanda: Trovare quante righe/colonne possiede la matrice indicata";
+indexQuestion::usage="Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore. ";
+identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
+haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
+questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
 x::usage = "";
 y::usage = "";
 z::usage = "";
@@ -358,56 +362,100 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 	Return[{L,U,P,bPerm}];
 ];
 
-exerciseMatrix[] := DynamicModule[{rowQuestion,columnQuestion,indexQuestion,indexTextQuestion,row,column,randomArray1,randomArray2,matrix, text,
-							answers,trueAnswer,question,index,ind,subscriptIndex,questionsList,radioAnswer,choice,gridOptions,positionRow,
-							positionColumn,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, printMatrix,checkButton,restartButton,dialogImage,dialogText},
+diagonalMatrixQuestion[]:= Module[{index, randomElements,matrix, answers,solution,wrongAnswers,text, gridOptions},
+	text = "Quale tra queste \[EGrave] la diagonale della seguente matrice ?";
+	(*Generazione grandezza matrice, elementi, risposte errate e soluzioni*)
+	index = RandomInteger[{3,5}];
+	randomElements = RandomSample[Range[-20,20],(index*index)];
+	matrix = ArrayReshape[randomElements,{index,index}];
+	solution = Diagonal[matrix];
+	wrongAnswers = RandomSample[Tuples[DeleteCases[randomElements,solution],index],3];
+	answers = Join[{solution},wrongAnswers];
+	Return[{text,MatrixForm/@answers,solution//MatrixForm,matrix}]			
+];
+
+rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
+	(*Generazione di una matrice non quadrata e della soluzione casuale tra riga e colonna*)
 	index = RandomSample[Range[4,6],2];
 	row = index[[1]];
 	column = index[[2]];
 	matrix = (row*column);
 	answers = {row, column, matrix, (row+column)};
-	questionsList = {
-		rowQuestion,
-		columnQuestion,
-		indexQuestion,
-		indexTextQuestion,
-	};
-	question = RandomChoice[questionsList];
-	text = StringReplace["Quante \!\(\*
-StyleBox[\"righe\",\nFontWeight->\"Bold\"]\) ci sono in una matrice NRighe X NColonne ?", {"NRighe"-> ToString[row],"NColonne"-> ToString[column]}];
-	positionRow = RandomInteger[{1,row}];
-	positionColumn = RandomInteger[{1,column}];
-	randomArray1 = RandomSample[Range[-15,15],matrix];
-	randomArray2 = ArrayReshape[randomArray1,{row,column}];
-	printMatrix = False;
-	Switch[question,
-			rowQuestion,
-				trueAnswer = row,
-			columnQuestion,
-				text= StringReplace[text, "righe"->"colonne"];
-				trueAnswer = column,
-			indexQuestion,
-				text= StringReplace["Nella matrice l'elemento x a cosa corrisponde ?","x"-> ToString[randomArray2[[positionRow,positionColumn]]]];
-				trueAnswer = Subscript["a",StringJoin[ToString[positionRow],ToString[positionColumn]]];
-				wrongAnswersRow = RandomSample[Tuples[Range[1,row],1],3];
-				wrongAnswersColumn = RandomSample[Tuples[DeleteCases[Range[1,column],positionColumn],1],3];
-				wrongAnswers = Join[wrongAnswersRow,wrongAnswersColumn,2];
-				ind = StringReplace["xy",{"x"->ToString[#[[1]]],"y"->ToString[#[[2]]]}] & /@ wrongAnswers;
-				subscriptIndex = Subscript["a","index"]/.{"index"->#} & /@ ind;
-				answers = Flatten[{trueAnswer, subscriptIndex}];
-				printMatrix = True,
-			indexTextQuestion,
-				ind = Subscript["a",StringJoin[ToString[positionRow],ToString[positionColumn]]];
-				text = StringReplace["Nella matrice l'elemento x a cosa corrisponde?", "x"->ind];
-				trueAnswer = randomArray2[[positionRow,positionColumn]];
-				wrongAnswers = RandomSample[Tuples[DeleteCases[randomArray1,trueAnswer],1],3];
-				answers = Flatten[{trueAnswer, wrongAnswers}];
-				printMatrix = True
+	solution = RandomChoice[{row,column}];
+	text = StringReplace["Quante righe ci sono in una matrice NRighe X NColonne ?", 
+			{"NRighe"-> ToString[row],"NColonne"-> ToString[column]}];
+	If[MatchQ[solution,column],
+		text = StringReplace[text, "righe"->"colonne"]
 	];
+	Return[{text,answers,solution, Null}]
+];
+
+indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,text,element, 
+						answers,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, ind, subscriptIndex},
+	(*Generazione matrice di grandezza casuale e scelta casuale di una posizione*)
+	index = RandomSample[Range[4,6],2];
+	row = RandomInteger[{1,index[[1]]}];
+	column = RandomInteger[{1,index[[2]]}];
+	ind = StringReplace["xy",{"x"->ToString[row],"y"->ToString[column]}];
+	position = Subscript["a","index"]/.{"index"->ind};
+	(*Viene popolata casualmente la matrice*)
+	matrixRandom = RandomSample[Range[-15,15],(index[[1]]*index[[2]])];
+	matrix = ArrayReshape[matrixRandom,{index[[1]],index[[2]]}];
+	(*Casualit\[AGrave] della domanda tra elemento teorico o pratico*)
+	element = RandomChoice[{position//TraditionalForm,matrix[[row,column]]}];
+	text= StringReplace["Nella matrice l'elemento x a cosa corrisponde ?","x"-> ToString[element]];
+	If[MatchQ[element,position//TraditionalForm],
+		(*Generazione random delle soluzioni errate*)
+		solution = matrix[[row,column]];
+		wrongAnswers = RandomSample[Tuples[DeleteCases[matrixRandom,solution],1],3],
+			solution = position;
+			wrongAnswersRow = RandomSample[Tuples[Range[1,index[[1]]],1],3];
+			wrongAnswersColumn = RandomSample[Tuples[DeleteCases[Range[1,index[[2]]],column],1],3];
+			wrongAnswers = Join[wrongAnswersRow,wrongAnswersColumn,2];
+			ind = StringReplace["xy",{"x"->ToString[#[[1]]],"y"->ToString[#[[2]]]}] & /@ wrongAnswers;
+			wrongAnswers = Subscript["a","index"]/.{"index"->#} & /@ ind	
+	];
+	answers = Flatten[{solution, wrongAnswers}];
+	Return[{text,answers,solution,matrix}]
+];
+
+identityMatrixQuestion[]:=Module[{text,solution,wrongAnswers,answers},
+	text = "La matrice identit\[AGrave] presenta degli elementi diversi da zero:";
+	solution = "Nella diagonale";
+	wrongAnswers = {"Nella prima riga","Nella prima colonna","Indifferente, purch\[EGrave] siano 1"};
+	answers = Flatten[{solution,wrongAnswers}];
+	Return[{text,answers,solution,Null}]
+];
+
+haveDiagonalQuestion[]:= Module[{text,solution,wrongAnswers,answers},
+	text = "Quale delle seguenti matrici possiede una DIAGONALE ?";
+	solution = "Matrice quadrata";
+	wrongAnswers = {"Matrice rettangolare","Entrambe","Nessuna"};
+	answers = Flatten[{solution,wrongAnswers}];
+	Return[{text,answers,solution,Null}]
+];
+
+questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioAnswers,choice,checkButton,
+									restartButton,gridOptions, appearance,dialogImage,dialogText},
+	(*Viene scelta la domanda random*)
+	question = RandomChoice[{
+		diagonalMatrixQuestion,
+		haveDiagonalQuestion,
+		rowColumnQuestion,
+		identityMatrixQuestion,
+		indexQuestion
+	}];
+	{text,answers,solution,matrix} = question[];
 	answers = RandomSample[answers];
-	radioAnswer= RadioButtonBar[Dynamic[choice],answers, Appearance->"Vertical"];
+	(*RadioButtonBar con le risposte e relativo appeareance in base alla domanda*)
+	If[MatchQ[question,diagonalMatrixQuestion], 
+		appearance="Horizontal",
+		appearance="Vertical"
+	];
+	radioAnswers= Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->appearance]];
+	(*Controllo della scelta effettuata*)
 	checkButton = Button[Style["Verifica!",24],
-		If[MatchQ[choice,trueAnswer],
+	If[MatchQ[choice,solution],	
 			dialogImage = Import["images/checkmark.png"];
 			dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
 			dialogImage = Import["images/error.png"];
@@ -416,10 +464,12 @@ StyleBox[\"righe\",\nFontWeight->\"Bold\"]\) ci sono in una matrice NRighe X NCo
 		MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
 			Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
 		ImageSize->{200,50}];
+	(*Generazione nuova domanda con rivalutazione del notebook nel tag specificato*)
 	restartButton = Button[Style["Nuova domanda",24],
-		NotebookFind[EvaluationNotebook[], "questionMatrixTag",All,CellTags];
+		NotebookFind[EvaluationNotebook[], "questionExerciseTag",All,CellTags];
 		SelectionEvaluate[EvaluationNotebook[]],
 		ImageSize->{300,50}];
+	(*Stampa della domanda con personalizzazione della grid di Output*)
 	gridOptions = {
 		Frame->All,
 		FrameStyle->RGBColor[0.94,0.94,0.94],
@@ -428,10 +478,11 @@ StyleBox[\"righe\",\nFontWeight->\"Bold\"]\) ci sono in una matrice NRighe X NCo
 		ItemSize->Fit,
 		Alignment->{{Left,Left}}
 	};
-	If[printMatrix,
-		Grid[{{text,SpanFromLeft},{radioAnswer,randomArray2//MatrixForm},{restartButton,checkButton}}, gridOptions],
-		Grid[{{text,SpanFromLeft},{radioAnswer,SpanFromLeft},{restartButton,checkButton}}, gridOptions]
-	]
+	If[SameQ[matrix, Null],
+		grid = Grid[{{text,SpanFromLeft},{radioAnswers,SpanFromLeft},{restartButton,checkButton}}, gridOptions],
+		grid = Grid[{{text,SpanFromLeft},{radioAnswers,matrix//MatrixForm},{restartButton,checkButton}}, gridOptions]
+	];
+	grid
 ];
 
 exerciseFinalGauss[] := DynamicModule[{},
