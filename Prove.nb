@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[    213251,       5454]
-NotebookOptionsPosition[    191042,       5101]
-NotebookOutlinePosition[    191400,       5117]
-CellTagsIndexPosition[    191357,       5114]
+NotebookDataLength[    215990,       5520]
+NotebookOptionsPosition[    193549,       5163]
+NotebookOutlinePosition[    193910,       5179]
+CellTagsIndexPosition[    193867,       5176]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -5097,10 +5097,72 @@ QJWzcbeWQgXAakWMO3z8I0AbuSD09UsFwH3nTfL//yNAo77PMFVVBcARtDD3
    3.735585655948545*^9, 3.735585703569374*^9}, 3.735585877711851*^9},
  CellLabel->
   "Out[241]=",ExpressionUUID->"655f4fe1-52f8-4c48-8d0a-2a120efc872e"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"exerciseFinalGauss", "[", "]"}]], "Input",
+ CellChangeTimes->{{3.735932698298854*^9, 3.735932700707975*^9}},
+ CellLabel->
+  "In[1053]:=",ExpressionUUID->"425b5b65-36dd-4766-a402-9559f25030ce"],
+
+Cell[BoxData[
+ DynamicModuleBox[{GaussLinearSystemsPackage`Private`inputList$$ = {}, 
+  GaussLinearSystemsPackage`Private`startButton$$ = Button[
+  "Inizia!", 
+   GaussLinearSystemsPackage`stringInputToSystem[
+    GaussLinearSystemsPackage`Private`inputList$$]; 
+   GaussLinearSystemsPackage`Private`step1Shown$$ = True], 
+  GaussLinearSystemsPackage`Private`restartButton$$ = Button[
+  "Ricomincia", GaussLinearSystemsPackage`Private`inputList$$ = {}; 
+   GaussLinearSystemsPackage`Private`step1Shown$$ = False], 
+  GaussLinearSystemsPackage`Private`step1Shown$$ = False}, 
+  TagBox[GridBox[{
+     {
+      InputFieldBox[Dynamic[
+       Null, GaussLinearSystemsPackage`oneElementList[
+        GaussLinearSystemsPackage`Private`inputList$$, #]& ], String,
+       FieldSize->{40, 2}], "\[SpanFromLeft]"},
+     {
+      ButtonBox["\<\"Inizia!\"\>",
+       Appearance->Automatic,
+       ButtonFunction:>(
+        GaussLinearSystemsPackage`stringInputToSystem[
+         GaussLinearSystemsPackage`Private`inputList$$]; 
+        GaussLinearSystemsPackage`Private`step1Shown$$ = True),
+       Evaluator->Automatic,
+       Method->"Preemptive"], 
+      ButtonBox["\<\"Ricomincia\"\>",
+       Appearance->Automatic,
+       ButtonFunction:>(GaussLinearSystemsPackage`Private`inputList$$ = {}; 
+        GaussLinearSystemsPackage`Private`step1Shown$$ = False),
+       Evaluator->Automatic,
+       Method->"Preemptive"]},
+     {
+      DynamicBox[ToBoxes[
+        If[GaussLinearSystemsPackage`Private`step1Shown$$, 
+         Dynamic[
+          GaussLinearSystemsPackage`displayEquationSystem[
+          GaussLinearSystemsPackage`Private`inputList$$]], ""], StandardForm],
+       
+       ImageSizeCache->{0., {0., 7.}}], "\[SpanFromLeft]"}
+    },
+    AutoDelete->False,
+    GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}],
+   "Grid"],
+  DynamicModuleValues:>{}]], "Output",
+ CellChangeTimes->{
+  3.735932701367144*^9, 3.735932877449169*^9, {3.735932955230193*^9, 
+   3.735933007818524*^9}, {3.7359330913132677`*^9, 3.7359331055099287`*^9}, 
+   3.735933200053924*^9, 3.735933395227827*^9, 3.735933467766878*^9, 
+   3.7359336348346243`*^9, 3.735933890241411*^9},
+ CellLabel->
+  "Out[1053]=",ExpressionUUID->"bfb53702-dd14-4c73-a24a-47fc81eaf855"]
 }, Open  ]]
 },
 WindowSize->{1138, 987},
-WindowMargins->{{Automatic, 0}, {Automatic, 0}},
+WindowMargins->{{Automatic, -255}, {Automatic, 7}},
 FrontEndVersion->"11.2 for Mac OS X x86 (32-bit, 64-bit Kernel) (September \
 10, 2017)",
 StyleDefinitions->"Default.nb"
@@ -5455,6 +5517,10 @@ Cell[186396, 4986, 866, 23, 30, "Input",ExpressionUUID->"493aaf16-9049-473e-9a89
 Cell[CellGroupData[{
 Cell[187287, 5013, 299, 8, 30, "Input",ExpressionUUID->"81d54b4e-2d8c-4372-97db-6c44085c234f"],
 Cell[187589, 5023, 3437, 75, 240, "Output",ExpressionUUID->"655f4fe1-52f8-4c48-8d0a-2a120efc872e"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[191063, 5103, 216, 4, 30, "Input",ExpressionUUID->"425b5b65-36dd-4766-a402-9559f25030ce"],
+Cell[191282, 5109, 2251, 51, 113, "Output",ExpressionUUID->"bfb53702-dd14-4c73-a24a-47fc81eaf855"]
 }, Open  ]]
 }
 ]

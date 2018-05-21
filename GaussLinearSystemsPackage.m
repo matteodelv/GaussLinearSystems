@@ -545,8 +545,16 @@ stringInputToSystem[list_] := Module[{},
 ];
 SetAttributes[stringInputToSystem, HoldAll];
 
-exerciseFinalGauss[] := DynamicModule[{},
-	Return[Null]; (* TODO *)
+exerciseFinalGauss[] := DynamicModule[
+	{inputList = {}, startButton, restartButton, step1Shown = False},
+	
+	startButton = Button["Inizia!", stringInputToSystem[inputList];step1Shown=True];
+	restartButton = Button["Ricomincia", inputList = {};step1Shown=False];
+	Grid[{
+		{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize->{40,2}],SpanFromLeft},
+		{startButton, restartButton},
+		{Dynamic[If[step1Shown, Dynamic[displayEquationSystem[inputList]],""]],SpanFromLeft}
+	}] (* la grid va creata tutta ma le righe devono stare all'interno di dynamic con degli if per farle mostrare a pezzi *)
 ];
 
 End[];
