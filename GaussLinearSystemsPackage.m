@@ -274,7 +274,7 @@ exerciseTriangularizeMatrix[system_] := DynamicModule[
 	A = Drop[systemMatrix, None, -1];
 	b = Take[systemMatrix, All, -1];
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
-	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]],
+	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]]
 		(* Gestire caso sistema indeterminato o impossibile *),
 		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
 		inputMatrix = ConstantArray[0, rows*cols];
