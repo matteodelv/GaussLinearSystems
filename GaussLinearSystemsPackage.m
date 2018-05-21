@@ -268,13 +268,13 @@ exerciseReducedMatrixToSystem[] := DynamicModule[
 exerciseTriangularizeMatrix[system_] := DynamicModule[
 	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4], 
 	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButton, restartButton, gridOptions},
-	
 	systemMatrix = transformToMatrix[system,True];
 	{rows,cols} = calculateMatrixDims[system];
 	A = Drop[systemMatrix, None, -1];
 	b = Take[systemMatrix, All, -1];
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
-	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]]
+	
+	If[Not[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]]]
 		(* Gestire caso sistema indeterminato o impossibile *),
 		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
 		inputMatrix = ConstantArray[0, rows*cols];
