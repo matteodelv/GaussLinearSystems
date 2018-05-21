@@ -34,6 +34,9 @@ identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\
 haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
 questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
 
+oneElementList::usage = "";
+stringInputToSystem::usage = "";
+
 t::usage = "";
 x::usage = "";
 y::usage = "";
@@ -529,6 +532,18 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	];
 	grid
 ];
+
+oneElementList[list_, element_] := Module[{},
+	If[Not[SameQ[list, {}]], list = {}];
+	list = Insert[list, element, 1];
+];
+SetAttributes[oneElementList, HoldAll];
+
+stringInputToSystem[list_] := Module[{},
+	list = StringReplace[#,"="->"\[Equal]"]& @ list;
+	list = ToExpression @ Flatten @ StringSplit[#, ","] & @ list;
+];
+SetAttributes[stringInputToSystem, HoldAll];
 
 exerciseFinalGauss[] := DynamicModule[{},
 	Return[Null]; (* TODO *)
