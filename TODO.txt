@@ -1,7 +1,6 @@
 ﻿TODO Rimanenti:
 - trasformare il notebook in slides
 - generalizzare le funzioni degli esercizi nela package per riusarle nell'esercizio finale (step by step)
-- fare la foto del gruppo
 - togliere le immagini nel notebook e sostituirle con Import (quasi finito, mancano alcune immagini)
 - dividere funzione sistemi random per discriminare tra risolvibili e non (mancano i sistemi di Sara)
 - finire la navigazione per gli esercizi (manca l'altra parte di Gauss)
@@ -9,15 +8,4 @@
 - finire esercizi intermedi (mancano domande sui pivot e mosse Gauss)
 - finire esercizio finale
 - commentare il package!!!!
-
-
-Aggiungete sotto qualsiasi altra cosa vi venga in mente!
-
-- decisioni stilistiche in fondo
-
-Correzioni rimanenti:
-- Bisogna spiegare meglio la mossa 1: per lei la mossa 1 è cercare e posizionare il pivot giusto al posto giusto quindi vuole spiegato bene che lo scambio di righe può essere fatto oppure no
-- Mettere step 2.1, 2.2, 2.3, ... per spiegare che lo step 2 in realtà consiste nell'annullare tutti gli elementi sotto il pivot. Visto che abbiamo usato lo step 2 per ogni combinazione lineare lei vuole specificata la riga
 - Mettere il numero di slide nel quale siamo così da capire l'avanzamento nel progetto
-- Sistemare i cerchi degli elementi da annullare: cerchi solo per elementi sotto al pivot, gli altri elementi della riga sono da riquadrare con un rettangolo o con simboli diversi
-- Sistemare la parte con i sistemi impossibili e indeterminati. Lei vorrebbe che si capisse che sono due slide per ogni tipo di sistema (non lo aveva colto)
