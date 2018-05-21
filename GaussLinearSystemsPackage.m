@@ -33,6 +33,8 @@ indexQuestion::usage="Domanda: Indentificare un elemento di una matrice, dato l'
 identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
 haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
 questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
+
+t::usage = "";
 x::usage = "";
 y::usage = "";
 z::usage = "";
@@ -111,7 +113,7 @@ calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
 ];
 
 (* Restituisce un sistema random tra quelli presenti. Funzione utilizzata negli esercizi*)
-getRandomSystem[] := Module[{systems},
+getRandomSystem[solvable_:True] := Module[{systems},
 	systems = {
 		{3x-2y==-1, 4x-5y==-2},
 		{5y+x==3, 2x-4y==-8},
@@ -122,6 +124,17 @@ getRandomSystem[] := Module[{systems},
 		{3x+y+z==3, 6x-2y+z==1, 3y+3x+3z==7},
 		{x+3z+2y==1, 3x+4y+6z==3, 5y-3z+10x==-4}
 	};
+	If[Not[solvable],
+		systems = Join[systems, {
+			{1/2x-y+2t==0, y+2z-2t==1, x+y+6z-2t==3, y-z+3t==0} (* impossibile *),
+			{3x+2y-z==0, x+y+z==3} (* indeterminato *),
+			{x-2y+z==1, -t+3y+z==2, 7t+7z==7, y+2z==3} (* impossibile *),
+			{t-x+y==1, 2t-y==0, -t+z==-1} (* indeterminato *),
+			{2x+3y+t==6, -9y+2z-t==3, -z+7t==5} (* indeterminato *),
+			{x+y==0, x+y==1} (* impossibile *),
+			{x-y+z==2, -x+y+z==1} (* indeterminato *)
+		}];
+	];
 	Return[RandomChoice[systems]];
 ];
 (*Funzione che prende in input un sistema di equazioni e restituisce la matrice associata*)
@@ -153,7 +166,7 @@ exerciseSystemToMatrix[] := DynamicModule[
 	{system, matrix, dims, rowCount, colCount, inputMatrix, inputMatrixShown, checkButton, restartButton, gridOptions,
 	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText},
 	(*viene scelto un sistema random tra quelli presenti nel sistema*)
-	system = getRandomSystem[];
+	system = getRandomSystem[False];
 	(*calcola la dimensione della matrice*)
 	{rowCount,colCount} = calculateMatrixDims[system];
 	matrix = transformToMatrix[system,True];
