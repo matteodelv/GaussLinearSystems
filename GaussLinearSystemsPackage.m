@@ -43,6 +43,8 @@ Off[Solve::svars];
 Off[General::shdw];
 SetDirectory[NotebookDirectory[]];
 
+(*Funzione che permette di mostrare graficamente la soluzione 
+di un sistema di due equazioni di primo grado in due incognite *)
 plotLinearSystem2[eq1_, eq2_] := Module[{solutions, points},
 	solutions = Solve[{eq1,eq2}];
 	points = {Blue, PointSize[Large], Point[{x,y}/.solutions]};
@@ -51,6 +53,8 @@ plotLinearSystem2[eq1_, eq2_] := Module[{solutions, points},
 	Show[plotEq1, plotEq2, Graphics[{points}], ImageSize->400,Background->White]
 ];
 
+(* Funzione che permette di mostrare graficamente la soluzione 
+di un sistema di tre equazioni di primo grado in tre incognite *)
 plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 	sols = Solve[{eq1,eq2,eq3}];
 	points = {Red, PointSize[Large], Point[{x,y,z} /. sols]};
@@ -60,6 +64,7 @@ plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 	Show[plotEq1,plotEq2,plotEq3,Graphics3D[{points}],ImageSize->400]
 ];
 
+(*Funzione che data in input una lista di equazione la visualizza sotto forma di sistema*)
 displayEquationSystem[eqs_] := Module[{eqsFF},
 	eqsFF = TraditionalForm /@ HoldForm /@ eqs;
 	DisplayForm@RowBox[{StyleBox["{", SpanMaxSize->Infinity], Column[eqsFF, Alignment->Left]}]
@@ -86,6 +91,7 @@ highlightElementsTable[eqs_] := Module[{rowCount,colCount,incognite,coefficienti
 	Style[TableForm[eqsData,TableSpacing->{3,1}, TableAlignments->{Right,Left}],30]
 ];
 
+(* Funzione che permette di evidenziare gli elementi di una matrice *)
 highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
 	lastCol = 1;
 	For[i=1,i<=Length[matrix],i++,
@@ -96,6 +102,7 @@ highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
 	Return[editedMatrix];
 ];
 
+(* Funzione che restituisce la dimensioni (righe, colonne) di una matrice *)
 calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
 	rows = Length[system];
 	lhsParts = Level[#,1][[1]] & /@ system;
@@ -103,6 +110,7 @@ calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
 	Return[{rows,cols}];
 ];
 
+(* Restituisce un sistema random tra quelli presenti. Funzione utilizzata negli esercizi*)
 getRandomSystem[] := Module[{systems},
 	systems = {
 		{3x-2y==-1, 4x-5y==-2},
@@ -116,7 +124,7 @@ getRandomSystem[] := Module[{systems},
 	};
 	Return[RandomChoice[systems]];
 ];
-
+(*Funzione che prende in input un sistema di equazioni e restituisce la matrice associata*)
 transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
 	If[withTerms,
 		system = Level[#,1][[1]] & /@ eqs;
@@ -140,12 +148,13 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 	];
 	Return[matrix];
 ];
-
+(*Funzione esercizio: che dato un sistema di equazioni random l'utente deve trasformarlo nella matrice associata*)
 exerciseSystemToMatrix[] := DynamicModule[
 	{system, matrix, dims, rowCount, colCount, inputMatrix, inputMatrixShown, checkButton, restartButton, gridOptions,
 	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText},
-	
+	(*viene scelto un sistema random tra quelli presenti nel sistema*)
 	system = getRandomSystem[];
+	(*calcola la dimensione della matrice*)
 	{rowCount,colCount} = calculateMatrixDims[system];
 	matrix = transformToMatrix[system,True];
 	matrix = Flatten[matrix];
@@ -165,6 +174,7 @@ exerciseSystemToMatrix[] := DynamicModule[
 				]]
 			], {i,rowCount*colCount}
 		], colCount];
+	(*Button check: controlla che la matrice inserita corrisponda alla soluzione*)
 	checkButton = Button[Style["Verifica!",24],
 		shown=False;
 		If[MatchQ[matrix,inputMatrix],
@@ -177,6 +187,7 @@ exerciseSystemToMatrix[] := DynamicModule[
 		MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
 			Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
 		ImageSize->{200,50}];
+	(*Button ricomincia. Viene rivalutato il notebook *)
 	restartButton = Button[Style["Ricomincia!",24],
 		shown=False;
 		NotebookFind[EvaluationNotebook[], "exerciseSystemToMatrixCellTag",All,CellTags];
@@ -327,7 +338,7 @@ exerciseTriangularizeMatrix[system_] := DynamicModule[
 		}, gridOptions]
 	]
 ];
-
+(*Fattorizzazione LU: *)
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
 	If[SameQ[Det[A],0]||Not[Equal[Length[A],Length[A[[All,1]]]]],Return[{Null,Null,Null,Null}]];
 
@@ -362,18 +373,21 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 	Return[{L,U,P,bPerm}];
 ];
 
+(* Data una matrice generata random viene richiesto all'utente di selezionarne la diagonale*)
 diagonalMatrixQuestion[]:= Module[{index, randomElements,matrix, answers,solution,wrongAnswers,text, gridOptions},
 	text = "Quale tra queste \[EGrave] la diagonale della seguente matrice ?";
 	(*Generazione grandezza matrice, elementi, risposte errate e soluzioni*)
 	index = RandomInteger[{3,5}];
 	randomElements = RandomSample[Range[-20,20],(index*index)];
 	matrix = ArrayReshape[randomElements,{index,index}];
+	(*La soluzione corrisponde alla diagonale della matrice*)
 	solution = Diagonal[matrix];
 	wrongAnswers = RandomSample[Tuples[DeleteCases[randomElements,solution],index],3];
+	(*Unione della risposta esatta con le risposte sbagliate*)
 	answers = Join[{solution},wrongAnswers];
 	Return[{text,MatrixForm/@answers,solution//MatrixForm,matrix}]			
 ];
-
+(*Funzione che data una matrice di grandezza casuale richiede all'utente quale delle due indica la colonna o la riga*)
 rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 	(*Generazione di una matrice non quadrata e della soluzione casuale tra riga e colonna*)
 	index = RandomSample[Range[4,6],2];
@@ -390,6 +404,7 @@ rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 	Return[{text,answers,solution, Null}]
 ];
 
+(*Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore*)
 indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,text,element, 
 						answers,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, ind, subscriptIndex},
 	(*Generazione matrice di grandezza casuale e scelta casuale di una posizione*)
@@ -419,22 +434,27 @@ indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,
 	Return[{text,answers,solution,matrix}]
 ];
 
+(*Domanda che richiede all'utente la caratteristia chiave delle matrici identit\[AGrave]*)
 identityMatrixQuestion[]:=Module[{text,solution,wrongAnswers,answers},
 	text = "La matrice identit\[AGrave] presenta degli elementi diversi da zero:";
 	solution = "Nella diagonale";
 	wrongAnswers = {"Nella prima riga","Nella prima colonna","Indifferente, purch\[EGrave] siano 1"};
+	(*Vengono unite la soluzione e le risposte errate*)
 	answers = Flatten[{solution,wrongAnswers}];
 	Return[{text,answers,solution,Null}]
 ];
 
+(*Domanda che richiede all'utente quale matrice possiede una diagonale *)
 haveDiagonalQuestion[]:= Module[{text,solution,wrongAnswers,answers},
 	text = "Quale delle seguenti matrici possiede una DIAGONALE ?";
 	solution = "Matrice quadrata";
 	wrongAnswers = {"Matrice rettangolare","Entrambe","Nessuna"};
+	(*Vengono unite la soluzione e le risposte errate*)
 	answers = Flatten[{solution,wrongAnswers}];
 	Return[{text,answers,solution,Null}]
 ];
 
+(*Funzione che sceglie random le domande a risposta multipla e ne gestisce la relativa stampa sul Notebook*)
 questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioAnswers,choice,checkButton,
 									restartButton,gridOptions, appearance,dialogImage,dialogText},
 	(*Viene scelta la domanda random*)
