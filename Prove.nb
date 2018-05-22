@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[    215990,       5520]
-NotebookOptionsPosition[    193549,       5163]
-NotebookOutlinePosition[    193910,       5179]
-CellTagsIndexPosition[    193867,       5176]
+NotebookDataLength[    222231,       5658]
+NotebookOptionsPosition[    198663,       5286]
+NotebookOutlinePosition[    199021,       5302]
+CellTagsIndexPosition[    198978,       5299]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -5104,20 +5104,26 @@ Cell[CellGroupData[{
 Cell[BoxData[
  RowBox[{"exerciseFinalGauss", "[", "]"}]], "Input",
  CellChangeTimes->{{3.735932698298854*^9, 3.735932700707975*^9}},
- CellLabel->
-  "In[1053]:=",ExpressionUUID->"425b5b65-36dd-4766-a402-9559f25030ce"],
+ CellLabel->"In[63]:=",ExpressionUUID->"425b5b65-36dd-4766-a402-9559f25030ce"],
 
 Cell[BoxData[
- DynamicModuleBox[{GaussLinearSystemsPackage`Private`inputList$$ = {}, 
+ DynamicModuleBox[{GaussLinearSystemsPackage`Private`inputList$$ = {
+  2 GaussLinearSystemsPackage`x - 4 GaussLinearSystemsPackage`y == -8, 
+   GaussLinearSystemsPackage`x + 5 GaussLinearSystemsPackage`y == 3}, 
   GaussLinearSystemsPackage`Private`startButton$$ = Button[
   "Inizia!", 
    GaussLinearSystemsPackage`stringInputToSystem[
     GaussLinearSystemsPackage`Private`inputList$$]; 
-   GaussLinearSystemsPackage`Private`step1Shown$$ = True], 
+   GaussLinearSystemsPackage`Private`step$$ = 1], 
   GaussLinearSystemsPackage`Private`restartButton$$ = Button[
   "Ricomincia", GaussLinearSystemsPackage`Private`inputList$$ = {}; 
-   GaussLinearSystemsPackage`Private`step1Shown$$ = False], 
-  GaussLinearSystemsPackage`Private`step1Shown$$ = False}, 
+   GaussLinearSystemsPackage`Private`step$$ = 0], 
+  GaussLinearSystemsPackage`Private`step1Shown$$ = False, 
+  GaussLinearSystemsPackage`Private`output$$, 
+  GaussLinearSystemsPackage`Private`step2Shown$$ = False, 
+  GaussLinearSystemsPackage`Private`step3Shown$$ = False, 
+  GaussLinearSystemsPackage`Private`step4Shown$$ = False, 
+  GaussLinearSystemsPackage`Private`step$$ = 4}, 
   TagBox[GridBox[{
      {
       InputFieldBox[Dynamic[
@@ -5130,39 +5136,156 @@ Cell[BoxData[
        ButtonFunction:>(
         GaussLinearSystemsPackage`stringInputToSystem[
          GaussLinearSystemsPackage`Private`inputList$$]; 
-        GaussLinearSystemsPackage`Private`step1Shown$$ = True),
+        GaussLinearSystemsPackage`Private`step$$ = 1),
        Evaluator->Automatic,
        Method->"Preemptive"], 
       ButtonBox["\<\"Ricomincia\"\>",
        Appearance->Automatic,
        ButtonFunction:>(GaussLinearSystemsPackage`Private`inputList$$ = {}; 
-        GaussLinearSystemsPackage`Private`step1Shown$$ = False),
+        GaussLinearSystemsPackage`Private`step$$ = 0),
        Evaluator->Automatic,
        Method->"Preemptive"]},
      {
       DynamicBox[ToBoxes[
-        If[GaussLinearSystemsPackage`Private`step1Shown$$, 
-         Dynamic[
-          GaussLinearSystemsPackage`displayEquationSystem[
-          GaussLinearSystemsPackage`Private`inputList$$]], ""], StandardForm],
-       
-       ImageSizeCache->{0., {0., 7.}}], "\[SpanFromLeft]"}
+        Switch[
+        GaussLinearSystemsPackage`Private`step$$, 0, "", 1, 
+         "Passo 1: Trasforma il sistema nella matrice associata", 2, 
+         "Passo 2: Applica il Metodo di Gauss per ridurre la matrice a \
+gradini", 3, "Passo 3: Ricava il sistema associato alla matrice ridotta", 4, 
+         "Passo 4: Scegli la soluzione corretta"], StandardForm],
+       ImageSizeCache->{290., {3., 10.}}], "\[SpanFromLeft]"},
+     {
+      DynamicBox[ToBoxes[
+        Switch[GaussLinearSystemsPackage`Private`step$$, 0, "", 1, 
+         GaussLinearSystemsPackage`exerciseSystemToMatrix[
+         GaussLinearSystemsPackage`Private`inputList$$, 
+          GaussLinearSystemsPackage`Private`step$$], 2, 
+         GaussLinearSystemsPackage`exerciseTriangularizeMatrix[
+         GaussLinearSystemsPackage`Private`inputList$$, True, 
+          GaussLinearSystemsPackage`Private`step$$], 3, 
+         GaussLinearSystemsPackage`exerciseReducedMatrixToSystem[
+         GaussLinearSystemsPackage`Private`inputList$$, 
+          GaussLinearSystemsPackage`Private`step$$], 4, 
+         "SEI ARRIVATO ALL'ULTIMO PASSO!"], StandardForm],
+       ImageSizeCache->{234., {1., 9.}}], "\[SpanFromLeft]"}
     },
     AutoDelete->False,
+    GridBoxFrame->{"Columns" -> {{True}}, "Rows" -> {{True}}},
     GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}],
    "Grid"],
   DynamicModuleValues:>{}]], "Output",
  CellChangeTimes->{
-  3.735932701367144*^9, 3.735932877449169*^9, {3.735932955230193*^9, 
-   3.735933007818524*^9}, {3.7359330913132677`*^9, 3.7359331055099287`*^9}, 
-   3.735933200053924*^9, 3.735933395227827*^9, 3.735933467766878*^9, 
-   3.7359336348346243`*^9, 3.735933890241411*^9},
- CellLabel->
-  "Out[1053]=",ExpressionUUID->"bfb53702-dd14-4c73-a24a-47fc81eaf855"]
+  3.736004224368751*^9, 3.736004520913679*^9, {3.7360057393377447`*^9, 
+   3.736005750620655*^9}, 3.736005783385331*^9, {3.73600617503479*^9, 
+   3.736006204850253*^9}, 3.736013247292762*^9, 3.736013540302238*^9, 
+   3.7360138440394783`*^9, 3.7360139939747543`*^9, 3.736014186614605*^9, 
+   3.7360142501332293`*^9, 3.736014665150227*^9, 3.736014784278529*^9},
+ CellLabel->"Out[63]=",ExpressionUUID->"f4c50614-db8b-48dd-9ea5-d3a222d2889b"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"checkButtonSystemToMatrix\"\>"], "Print",
+ CellChangeTimes->{3.736014822539056*^9},
+ CellLabel->"",ExpressionUUID->"904a670f-2965-4d7b-879b-abeab0c963cb"],
+
+Cell[BoxData["\<\"IF\"\>"], "Print",
+ CellChangeTimes->{3.7360148225625553`*^9},
+ CellLabel->"",ExpressionUUID->"3e8b59f1-5c0e-4418-b53f-65f1ac56c530"],
+
+Cell[BoxData["2"], "Print",
+ CellChangeTimes->{3.7360148225834103`*^9},
+ CellLabel->"",ExpressionUUID->"71de161c-993f-4704-9404-204bf5b410fb"],
+
+Cell[BoxData["\<\"checkButtonSystemToMatrix\"\>"], "Print",
+ CellChangeTimes->{3.736015135330433*^9},
+ CellLabel->"",ExpressionUUID->"36611fb1-cdc4-40fd-97c8-a4b2d44cc2df"],
+
+Cell[BoxData["\<\"IF\"\>"], "Print",
+ CellChangeTimes->{3.73601513535083*^9},
+ CellLabel->"",ExpressionUUID->"93ca670d-bf86-466f-ab3b-2f175b220fa5"],
+
+Cell[BoxData["2"], "Print",
+ CellChangeTimes->{3.7360151353682947`*^9},
+ CellLabel->"",ExpressionUUID->"8c0c7781-12ac-4302-8c09-1177d660eda0"]
 }, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"step", " ", "=", " ", "0"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"shown", " ", "=", " ", "False"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"button", " ", "=", " ", 
+  RowBox[{"Button", "[", 
+   RowBox[{"\"\<Cliccami!\>\"", ",", " ", 
+    RowBox[{"step", "++"}]}], "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"Grid", "[", 
+  RowBox[{"{", 
+   RowBox[{"{", 
+    RowBox[{"Dynamic", "[", 
+     RowBox[{"Switch", "[", 
+      RowBox[{
+      "step", ",", "\[IndentingNewLine]", "0", ",", " ", "\"\<Passo 0\>\"", 
+       ",", "\[IndentingNewLine]", "1", ",", " ", 
+       RowBox[{"\"\<Passo 1\>\"", ";", 
+        RowBox[{"shown", "=", "True"}]}], ",", " ", "\[IndentingNewLine]", 
+       "2", ",", " ", "\"\<Passo 2\>\"", ",", "\[IndentingNewLine]", "3", ",",
+        " ", 
+       RowBox[{"\"\<Passo 3\>\"", ";", 
+        RowBox[{"shown", "=", "False"}]}]}], "]"}], "]"}], "}"}], "}"}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Dynamic", "[", "shown", "]"}]}], "Input",
+ CellChangeTimes->{{3.7360058305756607`*^9, 3.7360059406081247`*^9}, {
+  3.736013664168933*^9, 3.736013702621615*^9}},
+ CellLabel->
+  "In[256]:=",ExpressionUUID->"f61103a0-6334-4160-abac-384aca6d9c06"],
+
+Cell[BoxData[
+ ButtonBox["\<\"Cliccami!\"\>",
+  Appearance->Automatic,
+  ButtonFunction:>Increment[$CellContext`step],
+  Evaluator->Automatic,
+  Method->"Preemptive"]], "Output",
+ CellChangeTimes->{{3.736005917670204*^9, 3.736005941740733*^9}, 
+   3.736012611016189*^9, 3.736013703593136*^9},
+ CellLabel->
+  "Out[258]=",ExpressionUUID->"7638f21b-93c7-4fb5-b321-51d6b0abc6cf"],
+
+Cell[BoxData[
+ TagBox[GridBox[{
+    {
+     DynamicBox[ToBoxes[
+       Switch[$CellContext`step, 0, "Passo 0", 1, 
+        "Passo 1"; $CellContext`shown = True, 2, "Passo 2", 3, 
+        "Passo 3"; $CellContext`shown = False], StandardForm],
+      ImageSizeCache->{199., {88., 13.}}]}
+   },
+   AutoDelete->False,
+   GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}],
+  "Grid"]], "Output",
+ CellChangeTimes->{{3.736005917670204*^9, 3.736005941740733*^9}, 
+   3.736012611016189*^9, 3.736013703614807*^9},
+ CellLabel->
+  "Out[259]=",ExpressionUUID->"65554627-b362-45ee-8018-abbc2876586c"],
+
+Cell[BoxData[
+ DynamicBox[ToBoxes[$CellContext`shown, StandardForm],
+  ImageSizeCache->{39., {1., 10.}}]], "Output",
+ CellChangeTimes->{{3.736005917670204*^9, 3.736005941740733*^9}, 
+   3.736012611016189*^9, 3.736013703629146*^9},
+ CellLabel->
+  "Out[260]=",ExpressionUUID->"aa543101-17a1-46de-93c0-629e556a00cd"]
+}, Open  ]],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.736005925948256*^9, 
+  3.7360059292801847`*^9}},ExpressionUUID->"b5bbe95d-f43a-46a9-a8c5-\
+0a2bb109bbf8"]
 },
-WindowSize->{1138, 987},
-WindowMargins->{{Automatic, -255}, {Automatic, 7}},
+WindowSize->{1037, 817},
+WindowMargins->{{Automatic, 0}, {Automatic, 0}},
 FrontEndVersion->"11.2 for Mac OS X x86 (32-bit, 64-bit Kernel) (September \
 10, 2017)",
 StyleDefinitions->"Default.nb"
@@ -5519,9 +5642,24 @@ Cell[187287, 5013, 299, 8, 30, "Input",ExpressionUUID->"81d54b4e-2d8c-4372-97db-
 Cell[187589, 5023, 3437, 75, 240, "Output",ExpressionUUID->"655f4fe1-52f8-4c48-8d0a-2a120efc872e"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[191063, 5103, 216, 4, 30, "Input",ExpressionUUID->"425b5b65-36dd-4766-a402-9559f25030ce"],
-Cell[191282, 5109, 2251, 51, 113, "Output",ExpressionUUID->"bfb53702-dd14-4c73-a24a-47fc81eaf855"]
+Cell[191063, 5103, 211, 3, 30, "Input",ExpressionUUID->"425b5b65-36dd-4766-a402-9559f25030ce"],
+Cell[191277, 5108, 3679, 74, 143, "Output",ExpressionUUID->"f4c50614-db8b-48dd-9ea5-d3a222d2889b"],
+Cell[CellGroupData[{
+Cell[194981, 5186, 172, 2, 24, "Print",ExpressionUUID->"904a670f-2965-4d7b-879b-abeab0c963cb"],
+Cell[195156, 5190, 151, 2, 24, "Print",ExpressionUUID->"3e8b59f1-5c0e-4418-b53f-65f1ac56c530"],
+Cell[195310, 5194, 142, 2, 24, "Print",ExpressionUUID->"71de161c-993f-4704-9404-204bf5b410fb"],
+Cell[195455, 5198, 172, 2, 24, "Print",ExpressionUUID->"36611fb1-cdc4-40fd-97c8-a4b2d44cc2df"],
+Cell[195630, 5202, 148, 2, 24, "Print",ExpressionUUID->"93ca670d-bf86-466f-ab3b-2f175b220fa5"],
+Cell[195781, 5206, 142, 2, 24, "Print",ExpressionUUID->"8c0c7781-12ac-4302-8c09-1177d660eda0"]
 }, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[195972, 5214, 1215, 28, 199, "Input",ExpressionUUID->"f61103a0-6334-4160-abac-384aca6d9c06"],
+Cell[197190, 5244, 375, 9, 45, "Output",ExpressionUUID->"7638f21b-93c7-4fb5-b321-51d6b0abc6cf"],
+Cell[197568, 5255, 606, 15, 121, "Output",ExpressionUUID->"65554627-b362-45ee-8018-abbc2876586c"],
+Cell[198177, 5272, 313, 6, 34, "Output",ExpressionUUID->"aa543101-17a1-46de-93c0-629e556a00cd"]
+}, Open  ]],
+Cell[198505, 5281, 154, 3, 30, "Input",ExpressionUUID->"b5bbe95d-f43a-46a9-a8c5-0a2bb109bbf8"]
 }
 ]
 *)

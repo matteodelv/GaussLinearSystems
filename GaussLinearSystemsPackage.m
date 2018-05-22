@@ -33,6 +33,7 @@ indexQuestion::usage="Domanda: Indentificare un elemento di una matrice, dato l'
 identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
 haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
 questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
+checkButtonFunction::usage = "";
 
 oneElementList::usage = "";
 stringInputToSystem::usage = "";
@@ -177,11 +178,11 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 	Return[matrix];
 ];
 (*Funzione esercizio: che dato un sistema di equazioni random l'utente deve trasformarlo nella matrice associata*)
-exerciseSystemToMatrix[] := DynamicModule[
-	{system, matrix, dims, rowCount, colCount, inputMatrix, inputMatrixShown, checkButton, restartButton, gridOptions,
-	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText},
+exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
+	{dims, rowCount, colCount, checkButtonSystemToMatrix, restartButton, gridOptions, system, inputMatrixShown, matrix, inputMatrix,
+	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText, output},
 	(*viene scelto un sistema random tra quelli presenti nel sistema*)
-	system = getRandomSystem[False];
+	If[SameQ[inputSystem,Null], system = getRandomSystem[False], system = inputSystem];
 	(*calcola la dimensione della matrice*)
 	{rowCount,colCount} = calculateMatrixDims[system];
 	matrix = transformToMatrix[system,True];
@@ -203,11 +204,16 @@ exerciseSystemToMatrix[] := DynamicModule[
 			], {i,rowCount*colCount}
 		], colCount];
 	(*Button check: controlla che la matrice inserita corrisponda alla soluzione*)
-	checkButton = Button[Style["Verifica!",24],
+	checkButtonSystemToMatrix = Button[Style["Verifica!",24],
+		Clear[dialogImage, dialogText];
+		Print["checkButtonSystemToMatrix"];
 		shown=False;
 		If[MatchQ[matrix,inputMatrix],
+			Print["IF"];
+			If[Not[SameQ[inputMatrix, Null]], result = 2; Print[result]];
 			dialogImage = Import["images/checkmark.png"];
 			dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+			If[Not[SameQ[inputMatrix, Null]], result = 1; Print[result]];
 			dialogImage = Import["images/error.png"];
 			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
 			shown=True;
@@ -216,11 +222,13 @@ exerciseSystemToMatrix[] := DynamicModule[
 			Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
 		ImageSize->{200,50}];
 	(*Button ricomincia. Viene rivalutato il notebook *)
-	restartButton = Button[Style["Ricomincia!",24],
-		shown=False;
-		NotebookFind[EvaluationNotebook[], "exerciseSystemToMatrixCellTag",All,CellTags];
-		SelectionEvaluate[EvaluationNotebook[]],
-		ImageSize->{200,50}];
+	If[SameQ[inputSystem, Null],
+		restartButton = Button[Style["Ricomincia!",24],
+			shown=False;
+			NotebookFind[EvaluationNotebook[], "exerciseSystemToMatrixCellTag",All,CellTags];
+			SelectionEvaluate[EvaluationNotebook[]],
+			ImageSize->{200,50}];
+	];
 	gridOptions = {
 		Frame->All,
 		FrameStyle->RGBColor[0.94,0.94,0.94],
@@ -229,17 +237,22 @@ exerciseSystemToMatrix[] := DynamicModule[
 		ItemSize->Fit,
 		Alignment->{{Right,Left}}
 	};
-	Grid[{
+	output = {
 		{displayEquationSystem[system],inputMatrixShown//MatrixForm},
-		{checkButton,restartButton}
-	}, gridOptions]
+		{checkButtonSystemToMatrix,If[SameQ[inputSystem,Null], restartButton,SpanFromLeft]}
+	};
+	If[Not[SameQ[inputSystem,Null]],
+		Grid[output, gridOptions],
+		Grid[output, gridOptions]
+	]
 ];
+SetAttributes[exerciseSystemToMatrix,HoldRest];
 
-exerciseReducedMatrixToSystem[] := DynamicModule[
-	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, newB, matrix, rows, checkButton, cols, prova,
+exerciseReducedMatrixToSystem[system_:Null,result_:0] := DynamicModule[
+	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, prova, output,
 	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False, backup,provaMatrice, restartButton, gridOptions, dialogImage, dialogText},
 	
-	randomSystem = getRandomSystem[];
+	If[SameQ[system, Null], randomSystem = getRandomSystem[], randomSystem = system];
 	{rows, cols} = calculateMatrixDims[randomSystem];
 	matrix = transformToMatrix[randomSystem,True];
 	
@@ -266,17 +279,21 @@ exerciseReducedMatrixToSystem[] := DynamicModule[
 					]]
 				], {i,rows}
 			],1];
-	checkButton = Button[Style["Verifica!",24],
+	checkButtonReduced = Button[Style["Verifica!",24],
 		If[Not[MemberQ[inputSystem, Null]],
+			Clear[dialogImage, dialogText];
 			prova = StringReplace[#, "=" -> "\[Equal]"] & @ inputSystem;
 			prova = ToExpression[#] & @ prova;
 			provaMatrice = transformToMatrix[prova, True];
 			If[MatchQ[reducedMatrix,provaMatrice],
+				If[Not[SameQ[system, Null]], result = 4];
 				dialogImage = Import["images/checkmark.png"];
 				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+				If[Not[SameQ[system, Null]], result = 3];
 				dialogImage = Import["images/error.png"];
 				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
 			],
+			If[Not[SameQ[system, Null]], result = 3];
 			dialogImage = Import["images/error.png"];
 			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
 		];
@@ -285,11 +302,13 @@ exerciseReducedMatrixToSystem[] := DynamicModule[
 		shown = True,
 		ImageSize->{200,50}
 	];
-	restartButton = Button[Style["Ricomincia!",24],
-		shown=False;
-		NotebookFind[EvaluationNotebook[], "exerciseReducedMatrixToSystemCellTag",All,CellTags];
-		SelectionEvaluate[EvaluationNotebook[]],
-		ImageSize->{200,50}];	
+	If[SameQ[system, Null],
+		restartButton = Button[Style["Ricomincia!",24],
+			shown=False;
+			NotebookFind[EvaluationNotebook[], "exerciseReducedMatrixToSystemCellTag",All,CellTags];
+			SelectionEvaluate[EvaluationNotebook[]],
+			ImageSize->{200,50}];	
+	];
 	gridOptions = {
 		Frame->All,
 		FrameStyle->RGBColor[0.94,0.94,0.94],
@@ -298,15 +317,21 @@ exerciseReducedMatrixToSystem[] := DynamicModule[
 		ItemSize->Fit,
 		Alignment->{{Right,Left}}
 	};
-	Grid[{
+	output = {
 		{highlightMatrixElements[reducedMatrix]//MatrixForm,inputSystemShown//MatrixForm},
-		{checkButton,restartButton}
-	}, gridOptions]
+		{checkButtonReduced,If[SameQ[system, Null],restartButton,SpanFromLeft]}
+	};
+	If[Not[SameQ[system, Null]],
+		Grid[output, gridOptions],
+		Grid[output, gridOptions]
+	]
 ];
+SetAttributes[exerciseReducedMatrixToSystem, HoldRest];
 
-exerciseTriangularizeMatrix[system_] := DynamicModule[
+exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0] := DynamicModule[
 	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4], 
-	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButton, restartButton, gridOptions},
+	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButtonTriangular, restartButton, gridOptions, output},
+	
 	systemMatrix = transformToMatrix[system,True];
 	{rows,cols} = calculateMatrixDims[system];
 	A = Drop[systemMatrix, None, -1];
@@ -335,11 +360,14 @@ exerciseTriangularizeMatrix[system_] := DynamicModule[
 		For[i=2,i<=Length[inputMatrixShown],i++,
 			inputMatrixShown[[i]][[1;;i-1]]=0;
 		];
-		checkButton = Button[Style["Verifica!",24],
+		checkButtonTriangular = Button[Style["Verifica!",24],
+			Clear[dialogImage, dialogText];
 			shown=False;
 			If[MatchQ[UFlattened,inputMatrix],
+				If[finalExercise, result = 3];
 				dialogImage = Import["images/checkmark.png"];
 				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+				If[finalExercise, result = 2];
 				dialogImage = Import["images/error.png"];
 				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
 				shown=True;
@@ -347,11 +375,13 @@ exerciseTriangularizeMatrix[system_] := DynamicModule[
 			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
 				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
 			ImageSize->{200,50}];
-		restartButton = Button[Style["Ricomincia!",24],
-			shown=False;
-			NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
-			SelectionEvaluate[EvaluationNotebook[]],
-			ImageSize->{200,50}];
+		If[Not[finalExercise],
+			restartButton = Button[Style["Ricomincia!",24],
+				shown=False;
+				NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
+				SelectionEvaluate[EvaluationNotebook[]],
+				ImageSize->{200,50}];
+		];
 		gridOptions = {
 			Frame->All,
 			FrameStyle->RGBColor[0.94,0.94,0.94],
@@ -360,12 +390,19 @@ exerciseTriangularizeMatrix[system_] := DynamicModule[
 			ItemSize->Fit,
 			Alignment->{{Right,Left}}
 		};
-		Grid[{
+		
+		output = {
 			{highlightMatrixElements[systemMatrix]//MatrixForm,inputMatrixShown//MatrixForm},
-			{checkButton,restartButton}
-		}, gridOptions]
+			{checkButtonTriangular,If[Not[finalExercise],restartButton,SpanFromLeft]}
+		};
+		If[Not[finalExercise],
+			Grid[output,gridOptions],
+			Grid[output, gridOptions]
+		]
 	]
 ];
+SetAttributes[exerciseTriangularizeMatrix, HoldRest];
+
 (*Fattorizzazione LU: *)
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
 	If[SameQ[Det[A],0]||Not[Equal[Length[A],Length[A[[All,1]]]]],Return[{Null,Null,Null,Null}]];
@@ -503,7 +540,7 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	radioAnswers= Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->appearance]];
 	(*Controllo della scelta effettuata*)
 	checkButton = Button[Style["Verifica!",24],
-	If[MatchQ[choice,solution],	
+		If[MatchQ[choice,solution],	
 			dialogImage = Import["images/checkmark.png"];
 			dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
 			dialogImage = Import["images/error.png"];
@@ -546,15 +583,88 @@ stringInputToSystem[list_] := Module[{},
 SetAttributes[stringInputToSystem, HoldAll];
 
 exerciseFinalGauss[] := DynamicModule[
-	{inputList = {}, startButton, restartButton, step1Shown = False},
+	{inputList = {}, startButton, restartButton, step1Shown = False, output, step2Shown = False, step3Shown = False, step4Shown = False, step=0},
 	
-	startButton = Button["Inizia!", stringInputToSystem[inputList];step1Shown=True];
-	restartButton = Button["Ricomincia", inputList = {};step1Shown=False];
+	startButton = Button["Inizia!", stringInputToSystem[inputList];step=1(*;step1Shown=True*)];
+	restartButton = Button["Ricomincia", inputList = {};step=0(*;step1Shown=False*)];
+	(*
+	If[step\[Equal]0,
+		Print["Step = 0"];
+		output = Grid[{
+			{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize\[Rule]{40,2}],SpanFromLeft},
+			{startButton,restartButton}
+		}];
+		Print[output];
+	];
+	If[step\[Equal]1,
+		Print["Step = 1"];
+		Print["input = ", input];
+		output = Grid[{
+			{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize\[Rule]{40,2}],SpanFromLeft},
+			{startButton,restartButton},
+			{"Passo 1: Trasforma il sistema nella matrice associata", SpanFromLeft},
+			{exerciseSystemToMatrix[input, step2Shown],SpanFromLeft}
+		}];
+		Dynamic[If[step2Shown,Print["CIAO"];exerciseFinalGauss[2, input]]];
+		Print[output];
+	];
+	If[step\[Equal]2,
+		Print["Step = 2"];
+		Print["input = ", input];
+		output = Grid[{
+			{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize\[Rule]{40,2}],SpanFromLeft},
+			{startButton,restartButton},
+			{"Passo 2: Applica il Metodo di Gauss per ridurre la matrice a gradini", SpanFromLeft},
+			{exerciseTriangularizeMatrix[input, True, step3Shown],SpanFromLeft}
+		}];
+		Dynamic[If[step3Shown, exerciseFinalGauss[3, input]]];
+		Print[output];
+	];*)
+	(*Print[output];*)
+	(*
+	Dynamic[
+		Print["DYNAMIC"];
+		If[step4Shown, prova = 4,
+			Print["PRIMO ELSE"];
+			If[step3Shown, prova = 3,
+				Print["SECONDO ELSE"];
+				If[step2Shown, prova = 2, Print["TERZO ELSE"]];
+			];
+		];
+	];*)
+	
 	Grid[{
 		{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize->{40,2}],SpanFromLeft},
-		{startButton, restartButton},
-		{Dynamic[If[step1Shown, Dynamic[displayEquationSystem[inputList]],""]],SpanFromLeft}
-	}] (* la grid va creata tutta ma le righe devono stare all'interno di dynamic con degli if per farle mostrare a pezzi *)
+		{startButton,restartButton},
+		{Dynamic[
+			Switch[step,
+			0, "",
+			1, "Passo 1: Trasforma il sistema nella matrice associata",
+			2, "Passo 2: Applica il Metodo di Gauss per ridurre la matrice a gradini",
+			3, "Passo 3: Ricava il sistema associato alla matrice ridotta",
+			4, "Passo 4: Scegli la soluzione corretta"]
+		],SpanFromLeft},
+		{Dynamic[
+			Switch[step,
+			0, "",
+			1, exerciseSystemToMatrix[inputList, step],
+			2, exerciseTriangularizeMatrix[inputList, True, step],
+			3, exerciseReducedMatrixToSystem[inputList, step],
+			4, "SEI ARRIVATO ALL'ULTIMO PASSO!"]
+		],SpanFromLeft}
+		(*{Dynamic[
+			If[step1Shown, exerciseSystemToMatrix[inputList, step2Shown];step1Shown = Not[step2Shown],
+				If[step2Shown, exerciseTriangularizeMatrix[inputList, True, step3Shown];step2Shown = Not[step3Shown],
+					If[step3Shown, exerciseReducedMatrixToSystem[inputList, step4Shown]; step3Shown = False, ""]
+				]
+			]
+		],SpanFromLeft}*)(*,
+		{Dynamic[If[step1Shown, exerciseSystemToMatrix[inputList,step2Shown],""]],SpanFromLeft},
+		{Dynamic[If[step2Shown, "Applica il Metodo di Gauss per ridurre la matrice a gradini",""]],SpanFromLeft},
+		{Dynamic[If[step2Shown, exerciseTriangularizeMatrix[inputList, True, step3Shown],""]],SpanFromLeft},
+		{Dynamic[If[step3Shown, "Applica il Metodo di Gauss per ridurre la matrice a gradini",""]],SpanFromLeft},
+		{Dynamic[If[step3Shown, exerciseReducedMatrixToSystem[inputList, step4Shown],""]],SpanFromLeft}*)
+	},Frame->All] (* la grid va creata tutta ma le righe devono stare all'interno di dynamic con degli if per farle mostrare a pezzi *)
 ];
 
 End[];
