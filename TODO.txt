@@ -1,7 +1,5 @@
-﻿TODO Rimanenti:
+TODO Rimanenti:
 - generalizzare le funzioni degli esercizi nel package per riusarle nell'esercizio finale (step by step)
-- togliere le immagini nel notebook e sostituirle con Import (quasi finito, mancano alcune immagini)
-- Mettere il numero di slide nel quale siamo così da capire l'avanzamento nel progetto
 - trasformare il notebook in slides
 
 Pakage:
