@@ -34,6 +34,9 @@ identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\
 haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
 questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
 
+oneElementList::usage = "";
+stringInputToSystem::usage = "";
+
 t::usage = "";
 x::usage = "";
 y::usage = "";
@@ -115,14 +118,26 @@ calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
 (* Restituisce un sistema random tra quelli presenti. Funzione utilizzata negli esercizi*)
 getRandomSystem[solvable_:True] := Module[{systems},
 	systems = {
-		{3x-2y==-1, 4x-5y==-2},
+		{3x-2y==-1, 4x-5y==-2} (* 2 equazioni in 2 incognite *),
 		{5y+x==3, 2x-4y==-8},
 		{2x-5y==7, x-3y==1},
 		{2x-y==0, x+3y==1},
-		{z+3x-2y==0, z+x-y==0, 4x+2y-3z==5},
+		{5x+y==20, 5x+7y==20},
+		{2x-3y==4, -2x+4y==1},
+		{2x-y==7, 4x+3y==4},
+		{1/3x+4y==5, -x+1/2y==-5/2},
+		{x-1/2y==5/3, 3/2x-3/8y==1},
+		{z+3x-2y==0, z+x-y==0, 4x+2y-3z==5} (* 3 equazioni in 3 incognite *),
 		{x+y-z==6, y+x==3, x+z==0},
 		{3x+y+z==3, 6x-2y+z==1, 3y+3x+3z==7},
-		{x+3z+2y==1, 3x+4y+6z==3, 5y-3z+10x==-4}
+		{x+3z+2y==1, 3x+4y+6z==3, 5y-3z+10x==-4},
+		{2x+3y-z==0, x-y+z==1, 3x+2y+4z==-3},
+		{x+z==1, y+1/2z==-1, 2x+z==0},
+		{-x+y-z==1, 10x-5y+10z==-3, 2x+y+z==2},
+		{3x-y+2z==10, 6x+4z-y==17, x-2z+2y==-5},
+		{y+z-t==1, x-2y+t==1, 3x+2y-z-t==0, x-z==-2} (* 4 equazioni in 4 incognite *),
+		{2t+x+3y+5z==4, 4t+2y+8z==8, t+2x+2y+3z==5, x+y+z==4},
+		{2t-3x+4z==-1, x+2y-t==2, 3y+2z+t==4, x+y+t==0}
 	};
 	If[Not[solvable],
 		systems = Join[systems, {
@@ -518,8 +533,28 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	grid
 ];
 
-exerciseFinalGauss[] := DynamicModule[{},
-	Return[Null]; (* TODO *)
+oneElementList[list_, element_] := Module[{},
+	If[Not[SameQ[list, {}]], list = {}];
+	list = Insert[list, element, 1];
+];
+SetAttributes[oneElementList, HoldAll];
+
+stringInputToSystem[list_] := Module[{},
+	list = StringReplace[#,"="->"\[Equal]"]& @ list;
+	list = ToExpression @ Flatten @ StringSplit[#, ","] & @ list;
+];
+SetAttributes[stringInputToSystem, HoldAll];
+
+exerciseFinalGauss[] := DynamicModule[
+	{inputList = {}, startButton, restartButton, step1Shown = False},
+	
+	startButton = Button["Inizia!", stringInputToSystem[inputList];step1Shown=True];
+	restartButton = Button["Ricomincia", inputList = {};step1Shown=False];
+	Grid[{
+		{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize->{40,2}],SpanFromLeft},
+		{startButton, restartButton},
+		{Dynamic[If[step1Shown, Dynamic[displayEquationSystem[inputList]],""]],SpanFromLeft}
+	}] (* la grid va creata tutta ma le righe devono stare all'interno di dynamic con degli if per farle mostrare a pezzi *)
 ];
 
 End[];
