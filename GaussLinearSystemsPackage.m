@@ -48,6 +48,7 @@ Begin["`Private`"];
 
 Off[Solve::svars];
 Off[General::shdw];
+Off[Set::setraw];
 SetDirectory[NotebookDirectory[]];
 
 (*Funzione che permette di mostrare graficamente la soluzione 
@@ -250,7 +251,7 @@ SetAttributes[exerciseSystemToMatrix,HoldRest];
 exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicModule[
 	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, prova, output,
 	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False, backup,provaMatrice, restartButton, gridOptions, dialogImage, dialogText},
-	Print["exerciseReducedMatrixToSystem"];
+	
 	If[SameQ[system, Null], randomSystem = getRandomSystem[], randomSystem = system];
 	{rows, cols} = calculateMatrixDims[randomSystem];
 	matrix = transformToMatrix[randomSystem,True];
@@ -330,17 +331,12 @@ SetAttributes[exerciseReducedMatrixToSystem, HoldRest];
 exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_:0] := DynamicModule[
 	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4], 
 	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButtonTriangular, restartButton, gridOptions, output},
-	Print["exerciseTriangularizeMatrix called"];
+	
 	systemMatrix = transformToMatrix[system,True];
-	Print["1"];
 	{rows,cols} = calculateMatrixDims[system];
-	Print["2"];
 	A = Drop[systemMatrix, None, -1];
-	Print["3"];
 	b = Take[systemMatrix, All, -1];
-	Print["4"];
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
-	Print["5"];
 	
 	gridOptions = {
 		Frame->All,
@@ -373,10 +369,8 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 			inputMatrixShown[[i]][[1;;i-1]]=0;
 		];
 		checkButtonTriangular = Button[Style["Verifica!",24],
-			Print["inside button"];
 			shown=False;
 			If[MatchQ[UFlattened,inputMatrix],
-				Print["inside if"];
 				If[finalExercise, oldResult = result;result = 3];
 				dialogImage = Import["images/checkmark.png"];
 				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
