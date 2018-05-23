@@ -33,7 +33,8 @@ indexQuestion::usage="Domanda: Indentificare un elemento di una matrice, dato l'
 identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
 haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
 questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
-checkButtonFunction::usage = "";
+finalExerciseRandomAnswers::usage = "";
+finalExerciseFoundAnswer::usage = "";
 
 oneElementList::usage = "";
 stringInputToSystem::usage = "";
@@ -570,6 +571,60 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	grid
 ];
 
+finalExerciseRandomAnswers[system_, result_:0] := DynamicModule[
+	{solutions, lhss, variables, answer, answers={}, randomAnswer, radioAnswers, choice, checkButton, gridOptions, i, k, dialogImage, dialogText},
+	
+	solutions = Solve[system];
+	lhss = Level[#, 1][[1]]& /@ system;
+	variables = Variables[lhss];
+	answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
+	For[i=1, i<=3, i++,
+		randomAnswer = {};
+		For[k=1, k<=Length[variables], k++,
+			AppendTo[randomAnswer, StandardForm[variables[[k]]]==RandomChoice[{RandomInteger[{-20,20}]/RandomInteger[{1,20}], RandomInteger[{-20,20}]}]];
+		];
+		AppendTo[answers, randomAnswer];
+	];
+	answers = Permute[AppendTo[answers,answer], RandomPermutation[4]];
+	answers = displayEquationSystem[#]& /@ answers;
+	radioAnswers = Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->"Horizontal"]];
+	checkButton = Button[Style["Verifica!",24],Print["choice = ", choice];Print["answer = ", answer];
+		If[SameQ[choice,displayEquationSystem[answer]], result = 5,
+			result = 4;
+			dialogImage = Import["images/error.png"];
+			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]]
+		],
+		ImageSize->{200,50}];
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->24],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->Center
+	};
+	Grid[{{radioAnswers,SpanFromLeft},{checkButton,SpanFromLeft}},gridOptions]
+];
+SetAttributes[finalExerciseRandomAnswers, HoldRest];
+
+finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer, gridOptions},
+	solutions = Solve[system];
+	lhss = Level[#, 1][[1]]& /@ system;
+	variables = Variables[lhss];
+	answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->Center
+	};
+	Grid[{{"Hai risolto correttamente l'intero esercizio!\nIl Metodo di Gauss non ha pi\[UGrave] segreti per te!"},{displayEquationSystem[answer]}},gridOptions]
+];
+
 oneElementList[list_, element_] := Module[{},
 	If[Not[SameQ[list, {}]], list = {}];
 	list = Insert[list, element, 1];
@@ -583,55 +638,10 @@ stringInputToSystem[list_] := Module[{},
 SetAttributes[stringInputToSystem, HoldAll];
 
 exerciseFinalGauss[] := DynamicModule[
-	{inputList = {}, startButton, restartButton, step1Shown = False, output, step2Shown = False, step3Shown = False, step4Shown = False, step=0},
+	{inputList = {}, startButton, restartButton, step=0},
 	
-	startButton = Button["Inizia!", stringInputToSystem[inputList];step=1(*;step1Shown=True*)];
-	restartButton = Button["Ricomincia", inputList = {};step=0(*;step1Shown=False*)];
-	(*
-	If[step\[Equal]0,
-		Print["Step = 0"];
-		output = Grid[{
-			{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize\[Rule]{40,2}],SpanFromLeft},
-			{startButton,restartButton}
-		}];
-		Print[output];
-	];
-	If[step\[Equal]1,
-		Print["Step = 1"];
-		Print["input = ", input];
-		output = Grid[{
-			{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize\[Rule]{40,2}],SpanFromLeft},
-			{startButton,restartButton},
-			{"Passo 1: Trasforma il sistema nella matrice associata", SpanFromLeft},
-			{exerciseSystemToMatrix[input, step2Shown],SpanFromLeft}
-		}];
-		Dynamic[If[step2Shown,Print["CIAO"];exerciseFinalGauss[2, input]]];
-		Print[output];
-	];
-	If[step\[Equal]2,
-		Print["Step = 2"];
-		Print["input = ", input];
-		output = Grid[{
-			{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize\[Rule]{40,2}],SpanFromLeft},
-			{startButton,restartButton},
-			{"Passo 2: Applica il Metodo di Gauss per ridurre la matrice a gradini", SpanFromLeft},
-			{exerciseTriangularizeMatrix[input, True, step3Shown],SpanFromLeft}
-		}];
-		Dynamic[If[step3Shown, exerciseFinalGauss[3, input]]];
-		Print[output];
-	];*)
-	(*Print[output];*)
-	(*
-	Dynamic[
-		Print["DYNAMIC"];
-		If[step4Shown, prova = 4,
-			Print["PRIMO ELSE"];
-			If[step3Shown, prova = 3,
-				Print["SECONDO ELSE"];
-				If[step2Shown, prova = 2, Print["TERZO ELSE"]];
-			];
-		];
-	];*)
+	startButton = Button["Inizia!", stringInputToSystem[inputList]; step=1];
+	restartButton = Button["Ricomincia", inputList = {}; step=0];(* inserire reload della cella del notebook *)
 	
 	Grid[{
 		{InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize->{40,2}],SpanFromLeft},
@@ -642,7 +652,8 @@ exerciseFinalGauss[] := DynamicModule[
 			1, "Passo 1: Trasforma il sistema nella matrice associata",
 			2, "Passo 2: Applica il Metodo di Gauss per ridurre la matrice a gradini",
 			3, "Passo 3: Ricava il sistema associato alla matrice ridotta",
-			4, "Passo 4: Scegli la soluzione corretta"]
+			4, "Passo 4: Scegli la soluzione corretta",
+			5, "COMPLIMENTI!"]
 		],SpanFromLeft},
 		{Dynamic[
 			Switch[step,
@@ -650,21 +661,10 @@ exerciseFinalGauss[] := DynamicModule[
 			1, exerciseSystemToMatrix[inputList, step],
 			2, exerciseTriangularizeMatrix[inputList, True, step],
 			3, exerciseReducedMatrixToSystem[inputList, step],
-			4, "SEI ARRIVATO ALL'ULTIMO PASSO!"]
+			4, finalExerciseRandomAnswers[inputList, step],
+			5, finalExerciseFoundAnswer[inputList]]
 		],SpanFromLeft}
-		(*{Dynamic[
-			If[step1Shown, exerciseSystemToMatrix[inputList, step2Shown];step1Shown = Not[step2Shown],
-				If[step2Shown, exerciseTriangularizeMatrix[inputList, True, step3Shown];step2Shown = Not[step3Shown],
-					If[step3Shown, exerciseReducedMatrixToSystem[inputList, step4Shown]; step3Shown = False, ""]
-				]
-			]
-		],SpanFromLeft}*)(*,
-		{Dynamic[If[step1Shown, exerciseSystemToMatrix[inputList,step2Shown],""]],SpanFromLeft},
-		{Dynamic[If[step2Shown, "Applica il Metodo di Gauss per ridurre la matrice a gradini",""]],SpanFromLeft},
-		{Dynamic[If[step2Shown, exerciseTriangularizeMatrix[inputList, True, step3Shown],""]],SpanFromLeft},
-		{Dynamic[If[step3Shown, "Applica il Metodo di Gauss per ridurre la matrice a gradini",""]],SpanFromLeft},
-		{Dynamic[If[step3Shown, exerciseReducedMatrixToSystem[inputList, step4Shown],""]],SpanFromLeft}*)
-	},Frame->All] (* la grid va creata tutta ma le righe devono stare all'interno di dynamic con degli if per farle mostrare a pezzi *)
+	},Frame->All]
 ];
 
 End[];
