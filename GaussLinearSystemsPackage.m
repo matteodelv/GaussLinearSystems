@@ -64,7 +64,7 @@ SetDirectory[NotebookDirectory[]];
 @PARAM A = matrice quadrata da fattorizzare
 @PARAM b = vettore dei termini noti *)
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
-	(* se la matrice non è quadrata oppure il determinate è zero, la fattorizzazione LU non è applicabile *)
+	(* se la matrice non \[EGrave] quadrata oppure il determinate \[EGrave] zero, la fattorizzazione LU non \[EGrave] applicabile *)
 	If[Not[SquareMatrixQ[A]],Return[{Null,Null,Null,Null}]];
 	If[SameQ[Det[A],0],Return[{Null,Null,Null,Null}]];
 
@@ -87,24 +87,24 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 		pivot = matriceEdited[[pivotIndex,i]];
 
 		If[Not[Equal[i,pivotIndex]],
-			(* se il pivot NON è già quello sulla diagonale principale, scambia le righe e aggiorna la matrice di permutazione *)
+			(* se il pivot NON \[EGrave] gi\[AGrave] quello sulla diagonale principale, scambia le righe e aggiorna la matrice di permutazione *)
 			matriceEdited = Permute[matriceEdited,Cycles[{{i,pivotIndex}}]];
 			P = Permute[P, Cycles[{Flatten[{i,pivotIndex}]}]];
 		];
 		For[k=i+1,k<=n,k++,
 			If[Not[Equal[matriceEdited[[k,i]],0]],
-				(* se il pivot non è 0, calcola lambda, applica la mossa di Gauss a tutti gli elementi della riga k-esima e aggiorna L *)
+				(* se il pivot non \[EGrave] 0, calcola lambda, applica la mossa di Gauss a tutti gli elementi della riga k-esima e aggiorna L *)
 				lambda = (matriceEdited[[k,i]]/pivot);
 				L[[k,i]] = lambda;
 				matriceEdited[[k]] = matriceEdited[[k]]-lambda*matriceEdited[[i]];
 			];
 		];
-		(* se è avvenuto uno scambio di righe, anche gli opportuni elementi di L vanno permutati *)
+		(* se \[EGrave] avvenuto uno scambio di righe, anche gli opportuni elementi di L vanno permutati *)
 		If[Not[Equal[i,pivotIndex]]&&i>=2,
 			L[[i;;n,1;;i-1]]=Permute[L[[i;;n,1;;i-1]],Cycles[{{1,pivotIndex-i+1}}]];
 		];
 	];
-	(* U è la matrice triangolare superiore ottenuta dalla fattorizzazione *)
+	(* U \[EGrave] la matrice triangolare superiore ottenuta dalla fattorizzazione *)
 	U = matriceEdited;
 	(* aggiunge la matrice diagonale ad L *)
 	L=L+IdentityMatrix[n];
@@ -250,7 +250,7 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 		Alignment->{{Right,Left}}
 	};
 
-	(* se si è nell'esercizio finale e la fattorizzazione fallisce, va al passo finale perchè il sistema è impossibile o indeterminato *)
+	(* se si \[EGrave] nell'esercizio finale e la fattorizzazione fallisce, va al passo finale perch\[EGrave] il sistema \[EGrave] impossibile o indeterminato *)
 	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]], If[finalExercise, result=5],
 		(* altrimenti ricava la matrice ridotta completa *)
 		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
@@ -320,7 +320,7 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, systemToCheck, output,
 	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False,matrixToCheck, restartButton, gridOptions, dialogImage, dialogText},
 
-	(* se non c'è un sistema in input, ne sceglie uno random; poi calcola la matrice associata e le sue dimensioni *)
+	(* se non c'\[EGrave] un sistema in input, ne sceglie uno random; poi calcola la matrice associata e le sue dimensioni *)
 	If[SameQ[system, Null], randomSystem = getRandomSystem[], randomSystem = system];
 	{rows, cols} = calculateMatrixDims[randomSystem];
 	matrix = transformToMatrix[randomSystem,True];
@@ -470,7 +470,7 @@ finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
 	radioAnswers = Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->"Horizontal"]];
 	(* crea il pulsante per controllare la risposta scelta *)
 	checkButton = Button[Style["Verifica!",24],
-		(* se la risposta è giusta, l'utente può andare al passo successivo dell'esercizio; altrimenti rimane in quello corrente e viene mostrato un errore *)
+		(* se la risposta \[EGrave] giusta, l'utente pu\[OGrave] andare al passo successivo dell'esercizio; altrimenti rimane in quello corrente e viene mostrato un errore *)
 		If[SameQ[choice,displayEquationSystem[answer]], oldResult = result; result = 5,
 			oldResult = result; result = 4;
 			dialogImage = Import["images/error.png"];
@@ -509,7 +509,7 @@ finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer,
 	};
 
 	If[SquareMatrixQ[coeffMatrix]&&Det[coeffMatrix]!=0,
-		(* se il sistema è risolvibile, ricava la soluzione e la mostra sotto forma di sistema; altrimenti mostra il sistema in input indicando se è impossibile o indeterminato *)
+		(* se il sistema \[EGrave] risolvibile, ricava la soluzione e la mostra sotto forma di sistema; altrimenti mostra il sistema in input indicando se \[EGrave] impossibile o indeterminato *)
 		lhss = Level[#, 1][[1]]& /@ system;
 		variables = Variables[lhss];
 		answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
@@ -530,7 +530,7 @@ diagonalMatrixQuestion[]:= Module[{index, randomElements,matrix, answers,solutio
 	wrongAnswers = RandomSample[Tuples[DeleteCases[randomElements,solution],index],3];
 	(*Unione della risposta esatta con le risposte sbagliate*)
 	answers = Join[{solution},wrongAnswers];
-	Return[{text,MatrixForm/@answers,solution//MatrixForm,matrix}]
+	Return[{text,answers,solution,matrix}]
 ];
 
 (*Funzione che data una matrice di grandezza casuale richiede all'utente quale delle due indica la colonna o la riga*)
@@ -614,11 +614,11 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	{text,answers,solution,matrix} = question[];
 	answers = RandomSample[answers];
 	(*RadioButtonBar con le risposte e relativo appeareance in base alla domanda*)
-	If[MatchQ[question,diagonalMatrixQuestion],
+	(*If[MatchQ[question,diagonalMatrixQuestion],
 		appearance="Horizontal",
 		appearance="Vertical"
-	];
-	radioAnswers= Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->appearance]];
+	];*)
+	radioAnswers= Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->"Vertical"]];
 	(*Controllo della scelta effettuata*)
 	checkButton = Button[Style["Verifica!",24],
 		If[MatchQ[choice,solution],
@@ -696,7 +696,7 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 		(* se withTerms = True, si ricavano i termini noti e la parte dell'equazione senza di essi *)
 		system = Level[#,1][[1]] & /@ eqs;
 		terms = Level[#,1][[2]] & /@ eqs,
-		(* altrimenti le espressioni sono già senza termini noti *)
+		(* altrimenti le espressioni sono gi\[AGrave] senza termini noti *)
 		system = eqs
 	];
 	(* ricava le incognite *)
@@ -711,7 +711,7 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 		For[j=1,j<=Length[incognite],j++,
 			(* crea la chiave per ogni incognita, per risalire al suo coefficiente *)
 			key = Normal[SparseArray[{j->1},Length[incognite]]];
-			(* se la chiave è nella lista delle regole, allora ricava il coefficiente e lo mette nella riga; altrimenti mette 0 *)
+			(* se la chiave \[EGrave] nella lista delle regole, allora ricava il coefficiente e lo mette nella riga; altrimenti mette 0 *)
 			If[MemberQ[Keys[rules[[i]]],key],
 				AppendTo[row,Lookup[rules[[i]],Key[key]]],
 				AppendTo[row,0]
@@ -772,7 +772,7 @@ getRandomSystem[solvable_:True] := Module[{systems},
 @PARAM element = elemento da inserire
 - viene usato HoldAll per non valutare i parametri e simulare un passaggio per riferimento *)
 oneElementList[list_, element_] := Module[{},
-	(* se list ha già un elemento viene resettata *)
+	(* se list ha gi\[AGrave] un elemento viene resettata *)
 	If[Not[SameQ[list, {}]], list = {}];
 	(* il nuovo elemento viene inserito *)
 	list = Insert[list, element, 1];
