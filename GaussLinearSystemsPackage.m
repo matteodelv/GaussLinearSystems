@@ -17,7 +17,6 @@ ClearAll["GaussLinearSystemsPackage`*"];
 plotLinearSystem2::usage = "Permette di mostrare graficamente la soluzione di un sistema di due equazioni di primo grado in due incognite";
 plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un sistema di tre equazioni di primo grado in tre incognite";
 displayEquationSystem::usage = "Permette la visualizzazione di una lista di equazioni sotto forma di sistema";
-highlightElementsTable::usage = "Partendo da un sistema di equazioni, genera una tabella contenente coefficienti, incognite e termini noti, opportunamente evidenziati e colorati";
 highlightMatrixElements::usage = "Applica gli stili ad una matrice per evidenziare coefficienti e termini noti";
 calculateMatrixDims::usage = "Restituisce la dimensioni (righe, colonne) di una matrice";
 transformToMatrix::usage = "Partendo da un sistema di equazioni, restituisce la matrice associata";
@@ -27,17 +26,17 @@ exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in un viene visualizz
 exerciseTriangularizeMatrix::usage = "Mostra l'esercizio in cui viene visualizzata una matrice (relativa ad un sistema random) e l'utente deve applicare il Metodo di Gauss per inserire la matrice ridotta associata";
 exerciseFinalGauss::usage = "Mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo";
 fattorizzazioneLU::usage = "Implementazione della Fattorizzazione LU con pivoting parziale. Partendo da una matrice quadrata A ed un vettore b, ritorna le matrici L ed U, la matrice di permutazione P ed il vettore b' permutato";
-diagonalMatrixQuestion::usage="Domanda: Trovare la diagonale di una matrice";
-rowColumnQuestion::usage="Domanda: Trovare quante righe/colonne possiede la matrice indicata";
-indexQuestion::usage="Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore. ";
-identityMatrixQuestion::usage="Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
-haveDiagonalQuestion::usage="Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale ";
-questionsExercise::usage="Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
-finalExerciseRandomAnswers::usage = "";
-finalExerciseFoundAnswer::usage = "";
+diagonalMatrixQuestion::usage = "Domanda: Trovare la diagonale di una matrice";
+rowColumnQuestion::usage = "Domanda: Trovare quante righe/colonne possiede la matrice indicata";
+indexQuestion::usage = "Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore. ";
+identityMatrixQuestion::usage = "Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
+haveDiagonalQuestion::usage = "Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale";
+questionsExercise::usage = "Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
+finalExerciseRandomAnswers::usage = "Si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale";
+finalExerciseFoundAnswer::usage = "Si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta";
 
-oneElementList::usage = "";
-stringInputToSystem::usage = "";
+oneElementList::usage = "Funzione d'appoggio necessaria per mantenere l'invariante di una lista da un singolo elemento";
+stringInputToSystem::usage = "Funzione che si occupa di trasformare un insieme di equazioni in input in un sistema di equazioni valutabili da Mathematica";
 
 t::usage = "";
 x::usage = "";
@@ -76,27 +75,6 @@ plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 displayEquationSystem[eqs_] := Module[{eqsFF},
 	eqsFF = TraditionalForm /@ HoldForm /@ eqs;
 	DisplayForm@RowBox[{StyleBox["{", SpanMaxSize->Infinity], Column[eqsFF, Alignment->Left]}]
-];
-
-highlightElementsTable[eqs_] := Module[{rowCount,colCount,incognite,coefficienti,termineNoto},
-	rowCount = Length[eqs];
-	colCount=0;
-	eqsData = {};
-	For[i=1, i<=rowCount,i++,
-		eqData = {};
-		lhs = Level[eqs[[i]],1][[1]];
-		termineNoto = Level[eqs[[i]],1][[2]];
-		incognite = Sort[Variables[lhs]];
-		coefficienti = Values[CoefficientRules[lhs,incognite]];
-		If[Length[incognite]*2 > colCount,colCount=Length[incognite]*2];
-		For[k=1,k<=Length[incognite],k++,
-			AppendTo[eqData, Style[coefficienti[[k]], RGBColor[0.13,0.52,0.96]]];
-			AppendTo[eqData, Style[incognite[[k]], Red]];
-		];
-		AppendTo[eqData, Style[termineNoto, RGBColor[0.14,0.61,0.14]]];
-		eqsData = Append[eqsData, eqData];
-	];
-	Style[TableForm[eqsData,TableSpacing->{3,1}, TableAlignments->{Right,Left}],30]
 ];
 
 (* Funzione che permette di evidenziare gli elementi di una matrice *)
@@ -318,7 +296,7 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 		Alignment->{{Right,Left}}
 	};
 	output = {
-		{highlightMatrixElements[reducedMatrix]//MatrixForm,inputSystemShown//MatrixForm},
+		{highlightMatrixElements[reducedMatrix]//MatrixForm,displayEquationSystem[Flatten[inputSystemShown]]},
 		{checkButtonReduced,If[SameQ[system, Null],restartButton,SpanFromLeft]}
 	};
 	If[Not[SameQ[system, Null]],
