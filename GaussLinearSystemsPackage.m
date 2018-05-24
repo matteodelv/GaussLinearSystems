@@ -22,16 +22,16 @@ plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un
 (* Funzioni esercizi *)
 exerciseSystemToMatrix::usage = "Mostra l'esercizio in cui viene visualizzato un sistema di equazioni random e l'utente deve trasformarlo nella matrice associata";
 exerciseTriangularizeMatrix::usage = "Mostra l'esercizio in cui viene visualizzata una matrice (relativa ad un sistema random) e l'utente deve applicare il Metodo di Gauss per inserire la matrice ridotta associata";
-exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in un viene visualizzato un sistema di equazioni ridotto con Gauss e l'utente deve ricostruire il sistema ridotto associato";
+exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in cui viene visualizzata una matrice ridotta con Gauss e l'utente deve ricostruire il sistema ridotto associato";
 exerciseFinalGauss::usage = "Mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo";
+finalExerciseRandomAnswers::usage = "Si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale";
+finalExerciseFoundAnswer::usage = "Si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta";
 diagonalMatrixQuestion::usage = "Domanda: Trovare la diagonale di una matrice";
 rowColumnQuestion::usage = "Domanda: Trovare quante righe/colonne possiede la matrice indicata";
 indexQuestion::usage = "Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore. ";
 identityMatrixQuestion::usage = "Domanda: Viene richiesto dove la matrice identit\[AGrave] presenta degli elementi diversi da zero(Diagonale)";
 haveDiagonalQuestion::usage = "Domanda: Viene richiesto quale tra le matrice fornite possiede una diagonale";
 questionsExercise::usage = "Gestisce la casualit\[AGrave] delle domande, la correttezza della risposta fornita e la relativa stampa sul Notebook";
-finalExerciseRandomAnswers::usage = "Si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale";
-finalExerciseFoundAnswer::usage = "Si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta";
 
 (* Funzioni d'appoggio *)
 displayEquationSystem::usage = "Permette la visualizzazione di una lista di equazioni sotto forma di sistema";
@@ -149,17 +149,22 @@ plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 
 (* FUNZIONI ESERCIZI *)
 
-(*Funzione esercizio: che dato un sistema di equazioni random l'utente deve trasformarlo nella matrice associata*)
+(* Mostra l'esercizio in cui viene visualizzato un sistema di equazioni (eventualmente random) e l'utente deve trasformarlo nella matrice associata
+@PARAM inputSystem = eventuale sistema di equazioni in input
+@PARAM result = indica lo step successivo dell'esercizio finale
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
 exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
-	{dims, rowCount, colCount, checkButtonSystemToMatrix, restartButton, gridOptions, system, inputMatrixShown, matrix, inputMatrix,
+	{rowCount, colCount, checkButtonSystemToMatrix, restartButton, gridOptions, system, inputMatrixShown, matrix, inputMatrix,
 	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText, output},
-	(*viene scelto un sistema random tra quelli presenti nel sistema*)
+
+	(* se non si ha un sistema in input, ne viene scelto uno random *)
 	If[SameQ[inputSystem,Null], system = getRandomSystem[False], system = inputSystem];
-	(*calcola la dimensione della matrice*)
+	(* calcola la matrice e la sua dimensione *)
 	{rowCount,colCount} = calculateMatrixDims[system];
 	matrix = transformToMatrix[system,True];
 	matrix = Flatten[matrix];
 	inputMatrix = ConstantArray[0,rowCount*colCount];
+	(* crea una matrice di input field in modo da averne uno associato ad ogni coefficiente/termine noto del sistema *)
 	inputMatrixShown = Partition[
 		Table[With[{i=i},
 			Dynamic[Framed[
@@ -175,10 +180,11 @@ exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
 				]]
 			], {i,rowCount*colCount}
 		], colCount];
-	(*Button check: controlla che la matrice inserita corrisponda alla soluzione*)
+	(* Button check: controlla che la matrice inserita corrisponda alla soluzione *)
 	checkButtonSystemToMatrix = Button[Style["Verifica!",24],
-		Clear[dialogImage, dialogText];
 		shown=False;
+		(* se la matrice inserita e quella calcolata coincidono, mostra un messaggio di correttezza ed eventualmente passa al passo successivo *)
+		(* altrimenti mostra un messaggio d'errore e indica i valori errati *)
 		If[MatchQ[matrix,inputMatrix],
 			If[Not[SameQ[inputMatrix, Null]], result = 2];
 			dialogImage = Import["images/checkmark.png"];
@@ -191,7 +197,7 @@ exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
 		MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
 			Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
 		ImageSize->{200,50}];
-	(*Button ricomincia. Viene rivalutato il notebook *)
+	(* se l'esercizio viene svolto singolarmente, viene creato il pulsante per ricominciare, il quale ricarica la cella del notebook relativa *)
 	If[SameQ[inputSystem, Null],
 		restartButton = Button[Style["Ricomincia!",24],
 			shown=False;
@@ -211,21 +217,28 @@ exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
 		{displayEquationSystem[system],inputMatrixShown//MatrixForm},
 		{checkButtonSystemToMatrix,If[SameQ[inputSystem,Null], restartButton,SpanFromLeft]}
 	};
-	If[Not[SameQ[inputSystem,Null]],
-		Grid[output, gridOptions],
-		Grid[output, gridOptions]
-	]
+	Grid[output, gridOptions]
 ];
 SetAttributes[exerciseSystemToMatrix,HoldRest];
 
+(* Mostra l'esercizio in cui viene visualizzata una matrice (relativa ad un sistema random) e l'utente deve applicare il Metodo di Gauss per inserire la matrice ridotta associata
+@PARAM system = sistema in input
+@PARAM finalExercise = indica se la funzione viene eseguita come passo dell'esercizio finale o meno
+@PARAM result = indica lo step successivo dell'esercizio finale
+@PARAM oldResult = indica lo step precedente dell'esericizio finale
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
 exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_:0] := DynamicModule[
 	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4],
 	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButtonTriangular, restartButton, gridOptions, output},
 
+	(* ricava la matrice completa associata al sistema e le sue dimensioni *)
 	systemMatrix = transformToMatrix[system,True];
 	{rows,cols} = calculateMatrixDims[system];
+	(* ricava la matrice dei coefficienti *)
 	A = Drop[systemMatrix, None, -1];
+	(* ricava il vettore dei termini noti *)
 	b = Take[systemMatrix, All, -1];
+	(* applica la fattorizzazione LU su A e b *)
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
 
 	gridOptions = {
@@ -237,9 +250,12 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 		Alignment->{{Right,Left}}
 	};
 
+	(* se si è nell'esercizio finale e la fattorizzazione fallisce, va al passo finale perchè il sistema è impossibile o indeterminato *)
 	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]], If[finalExercise, result=5],
+		(* altrimenti ricava la matrice ridotta completa *)
 		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
 		inputMatrix = ConstantArray[0, rows*cols];
+		(* crea una matrice di input field avente le stesse dimensioni di quella ricavata, in modo da associare ogni input field ad un coefficiente/termine noto *)
 		inputMatrixShown = Partition[
 			Table[With[{i=i},
 				Dynamic[Framed[
@@ -255,11 +271,16 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 					]]
 				], {i,rows*cols}
 			],cols];
+		(* sostituisce gli input field con degli 0 in tutti gli elementi al di sotto della diagonale principale *)
 		For[i=2,i<=Length[inputMatrixShown],i++,
 			inputMatrixShown[[i]][[1;;i-1]]=0;
 		];
+		(* crea il pulsante per la verifica *)
 		checkButtonTriangular = Button[Style["Verifica!",24],
+			(* shown viene usato per mostrare il colore di sfondo agli input field, in base alla correttezza del contenuto *)
 			shown=False;
+			(* se la matrice inserita a mano coincide con quella calcolata dalla fattorizzazione, mostra un messaggio di correttezza ed eventualmente passa al passo successivo *)
+			(* altrimenti mostra un messaggio di errore e visualizza gli elementi errati *)
 			If[MatchQ[UFlattened,inputMatrix],
 				If[finalExercise, oldResult = result;result = 3];
 				dialogImage = Import["images/checkmark.png"];
@@ -272,6 +293,7 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
 				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
 			ImageSize->{200,50}];
+			(* crea il pulsante per ricominciare l'esericio se esso viene svolto singolarmente *)
 		If[Not[finalExercise],
 			restartButton = Button[Style["Ricomincia!",24],
 				shown=False;
@@ -284,52 +306,63 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 			{highlightMatrixElements[systemMatrix]//MatrixForm,inputMatrixShown//MatrixForm},
 			{checkButtonTriangular,If[Not[finalExercise],restartButton,SpanFromLeft]}
 		};
-		If[Not[finalExercise],
-			Grid[output,gridOptions],
-			Grid[output, gridOptions]
-		]
+		Grid[output, gridOptions]
 	]
 ];
 SetAttributes[exerciseTriangularizeMatrix, HoldRest];
 
+(* Mostra l'esercizio in cui viene visualizzata una matrice ridotta con Gauss e l'utente deve ricostruire il sistema ridotto associato
+@PARAM system = eventuale sistema in input
+@PARAM result = indica lo step successivo dell'esercizio finale
+@PARAM oldResult = indica lo step precedente dell'esericizio finale
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
 exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicModule[
-	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, prova, output,
-	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False, backup,provaMatrice, restartButton, gridOptions, dialogImage, dialogText},
+	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, systemToCheck, output,
+	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False,matrixToCheck, restartButton, gridOptions, dialogImage, dialogText},
 
+	(* se non c'è un sistema in input, ne sceglie uno random; poi calcola la matrice associata e le sue dimensioni *)
 	If[SameQ[system, Null], randomSystem = getRandomSystem[], randomSystem = system];
 	{rows, cols} = calculateMatrixDims[randomSystem];
 	matrix = transformToMatrix[randomSystem,True];
 
+	(* ricava la matrice A ed il vettore dei termini noti *)
 	A = Drop[matrix, None, -1];
 	b = Take[matrix, All, -1];
+	(* applica la fattorizzazione LU su A e b *)
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
+	(* ottiene la matrice ridotta completa unendo la matrice U e il nuovo vettore b *)
 	reducedMatrix = Join[U, ArrayReshape[newB,{rows,1}],2];
-	prova = ConstantArray[Null, rows];
-	provaMatrice = ArrayReshape[ConstantArray[0,rows*cols],{rows, cols}];
+	systemToCheck = ConstantArray[Null, rows];
+	matrixToCheck = ArrayReshape[ConstantArray[0,rows*cols],{rows, cols}];
 
 	inputSystem = ConstantArray[Null, rows];
+	(* crea gli input field, uno per ogni equazione da inserire, che cambiano colore in base alla correttezza del contenuto *)
 	inputSystemShown = Partition[
 			Table[With[{i=i},
 				Dynamic[Framed[
 					InputField[Dynamic[inputSystem[[i]]], String,FieldSize->{15,1},Appearance->"Frameless",
 						Background->If[shown,
-							If[SameQ[reducedMatrix[[i]],provaMatrice[[i]]],RGBColor[0,1,0,0.4],RGBColor[1,0,0,0.4]],
+							If[SameQ[reducedMatrix[[i]],matrixToCheck[[i]]],RGBColor[0,1,0,0.4],RGBColor[1,0,0,0.4]],
 							White]
 						],
 						FrameStyle->If[shown,
-							If[SameQ[reducedMatrix[[i]],provaMatrice[[i]]],RGBColor[0,1,0,0.4],RGBColor[1,0,0,0.4]],
+							If[SameQ[reducedMatrix[[i]],matrixToCheck[[i]]],RGBColor[0,1,0,0.4],RGBColor[1,0,0,0.4]],
 							Automatic],
 						FrameMargins->None
 					]]
 				], {i,rows}
 			],1];
+		(* crea il pulsante di verifica *)
 	checkButtonReduced = Button[Style["Verifica!",24],
 		If[Not[MemberQ[inputSystem, Null]],
-			Clear[dialogImage, dialogText];
-			prova = StringReplace[#, "=" -> "\[Equal]"] & @ inputSystem;
-			prova = ToExpression[#] & @ prova;
-			provaMatrice = transformToMatrix[prova, True];
-			If[MatchQ[reducedMatrix,provaMatrice],
+			(* se sono state inserite tutte le equazioni, manipola le stringhe per trasformarle in espressioni valutabili *)
+			systemToCheck = StringReplace[#, "=" -> "\[Equal]"] & @ inputSystem;
+			systemToCheck = ToExpression[#] & @ systemToCheck;
+			(* ricava la matrice associata alle equazioni scritte a mano *)
+			matrixToCheck = transformToMatrix[systemToCheck, True];
+			(* se la matrice calcolata e quella ricavata dalle equazioni scritte a mano coincidono, mostra il messaggio di correttezza ed eventualmente passa allo step successivo *)
+			(* altrimenti mostra un messaggio di errore *)
+			If[MatchQ[reducedMatrix,matrixToCheck],
 				If[Not[SameQ[system, Null]], oldResult = result;result = 4];
 				dialogImage = Import["images/checkmark.png"];
 				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
@@ -337,6 +370,7 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 				dialogImage = Import["images/error.png"];
 				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
 			],
+			(* mostra un messaggio di errore se non sono state scritte tutte le equazioni *)
 			If[Not[SameQ[system, Null]], oldResult=result;result = 3];
 			dialogImage = Import["images/error.png"];
 			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
@@ -347,6 +381,7 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 		ImageSize->{200,50}
 	];
 	If[SameQ[system, Null],
+		(* crea il pulsante di restart se si sta svolgendo questo esercizio singolarmente *)
 		restartButton = Button[Style["Ricomincia!",24],
 			shown=False;
 			NotebookFind[EvaluationNotebook[], "exerciseReducedMatrixToSystemCellTag",All,CellTags];
@@ -365,10 +400,7 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 		{highlightMatrixElements[reducedMatrix]//MatrixForm,displayEquationSystem[Flatten[inputSystemShown]]},
 		{checkButtonReduced,If[SameQ[system, Null],restartButton,SpanFromLeft]}
 	};
-	If[Not[SameQ[system, Null]],
-		Grid[output, gridOptions],
-		Grid[output, gridOptions]
-	]
+	Grid[output, gridOptions]
 ];
 SetAttributes[exerciseReducedMatrixToSystem, HoldRest];
 
@@ -407,6 +439,83 @@ exerciseFinalGauss[] := DynamicModule[
 	},
 	Frame->All, FrameStyle->RGBColor[0.94, 0.94, 0.94], Spacings->{0,2}, ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
 	ItemSize->{{Scaled[0.5],Scaled[0.5]}},Alignment->Center]
+];
+
+(* Funzione che si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale;
+@PARAM system = sistema di equazioni dato in input
+@PARAM result = indica lo step successivo dell'esercizio finale
+@PARAM oldResult = indica lo step precedente dell'esericizio finale
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
+finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
+	{solutions, lhss, variables, answer, answers={}, randomAnswer, radioAnswers, choice, checkButton, gridOptions, i, k, dialogImage, dialogText},
+
+	(* calcola la soluzione reale *)
+	solutions = Solve[system];
+	lhss = Level[#, 1][[1]]& /@ system;
+	variables = Variables[lhss];
+	answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
+	(* genera una lista di 3 risposte random errate *)
+	For[i=1, i<=3, i++,
+		randomAnswer = {};
+		For[k=1, k<=Length[variables], k++,
+			(* le risposte random possono essere semplici numeri oppure frazioni, sia positivi che negativi *)
+			AppendTo[randomAnswer, StandardForm[variables[[k]]]==RandomChoice[{RandomInteger[{-20,20}]/RandomInteger[{1,20}], RandomInteger[{-20,20}]}]];
+		];
+		AppendTo[answers, randomAnswer];
+	];
+	(* permuta a caso le quattro risposte e trasformale in sistema *)
+	answers = Permute[AppendTo[answers,answer], RandomPermutation[4]];
+	answers = displayEquationSystem[#]& /@ answers;
+	(* crea i radio button associati alle risposte *)
+	radioAnswers = Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->"Horizontal"]];
+	(* crea il pulsante per controllare la risposta scelta *)
+	checkButton = Button[Style["Verifica!",24],
+		(* se la risposta è giusta, l'utente può andare al passo successivo dell'esercizio; altrimenti rimane in quello corrente e viene mostrato un errore *)
+		If[SameQ[choice,displayEquationSystem[answer]], oldResult = result; result = 5,
+			oldResult = result; result = 4;
+			dialogImage = Import["images/error.png"];
+			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]]
+		],
+		ImageSize->{200,50}];
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->24],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->Center
+	};
+	(* mostra le risposte *)
+	Grid[{{radioAnswers,SpanFromLeft},{checkButton,SpanFromLeft}},gridOptions]
+];
+SetAttributes[finalExerciseRandomAnswers, HoldRest];
+
+(* Funzione che si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta;
+@PARAM system = sistema di equazioni utilizzate nell'esercizio *)
+finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer, gridOptions,coeffMatrix},
+	(* calcola le soluzioni e ricava la matrice dei coefficienti *)
+	solutions = Solve[system];
+	coeffMatrix = Drop[transformToMatrix[system,True], None, -1];
+
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->Center
+	};
+
+	If[SquareMatrixQ[coeffMatrix]&&Det[coeffMatrix]!=0,
+		(* se il sistema è risolvibile, ricava la soluzione e la mostra sotto forma di sistema; altrimenti mostra il sistema in input indicando se è impossibile o indeterminato *)
+		lhss = Level[#, 1][[1]]& /@ system;
+		variables = Variables[lhss];
+		answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
+		Grid[{{"Hai risolto correttamente l'intero esercizio!\nIl Metodo di Gauss non ha pi\[UGrave] segreti per te!"},{displayEquationSystem[answer]}},gridOptions],
+		Grid[{{displayEquationSystem[system], If[SameQ[Solve[system],{}],"Sistema impossibile","Sistema indeterminato"]}},gridOptions]
+	]
 ];
 
 (* Data una matrice generata random viene richiesto all'utente di selezionarne la diagonale*)
@@ -540,83 +649,6 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 		grid = Grid[{{text,SpanFromLeft},{radioAnswers,matrix//MatrixForm},{restartButton,checkButton}}, gridOptions]
 	];
 	grid
-];
-
-(* Funzione che si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale;
-@PARAM system = sistema di equazioni dato in input
-@PARAM result = indica lo step successivo dell'esercizio finale
-@PARAM oldResult = indica lo step precedente dell'esericizio finale
-- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
-finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
-	{solutions, lhss, variables, answer, answers={}, randomAnswer, radioAnswers, choice, checkButton, gridOptions, i, k, dialogImage, dialogText},
-
-	(* calcola la soluzione reale *)
-	solutions = Solve[system];
-	lhss = Level[#, 1][[1]]& /@ system;
-	variables = Variables[lhss];
-	answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
-	(* genera una lista di 3 risposte random errate *)
-	For[i=1, i<=3, i++,
-		randomAnswer = {};
-		For[k=1, k<=Length[variables], k++,
-			(* le risposte random possono essere semplici numeri oppure frazioni, sia positivi che negativi *)
-			AppendTo[randomAnswer, StandardForm[variables[[k]]]==RandomChoice[{RandomInteger[{-20,20}]/RandomInteger[{1,20}], RandomInteger[{-20,20}]}]];
-		];
-		AppendTo[answers, randomAnswer];
-	];
-	(* permuta a caso le quattro risposte e trasformale in sistema *)
-	answers = Permute[AppendTo[answers,answer], RandomPermutation[4]];
-	answers = displayEquationSystem[#]& /@ answers;
-	(* crea i radio button associati alle risposte *)
-	radioAnswers = Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->"Horizontal"]];
-	(* crea il pulsante per controllare la risposta scelta *)
-	checkButton = Button[Style["Verifica!",24],
-		(* se la risposta è giusta, l'utente può andare al passo successivo dell'esercizio; altrimenti rimane in quello corrente e viene mostrato un errore *)
-		If[SameQ[choice,displayEquationSystem[answer]], oldResult = result; result = 5,
-			oldResult = result; result = 4;
-			dialogImage = Import["images/error.png"];
-			dialogText = Style["SBAGLIATO. Riprova!",20,Red];
-			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
-				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]]
-		],
-		ImageSize->{200,50}];
-	gridOptions = {
-		Frame->All,
-		FrameStyle->RGBColor[0.94,0.94,0.94],
-		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->24],
-		Spacings->{10,3},
-		ItemSize->Fit,
-		Alignment->Center
-	};
-	(* mostra le risposte *)
-	Grid[{{radioAnswers,SpanFromLeft},{checkButton,SpanFromLeft}},gridOptions]
-];
-SetAttributes[finalExerciseRandomAnswers, HoldRest];
-
-(* Funzione che si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta;
-@PARAM system = sistema di equazioni utilizzate nell'esercizio *)
-finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer, gridOptions,coeffMatrix},
-	(* calcola le soluzioni e ricava la matrice dei coefficienti *)
-	solutions = Solve[system];
-	coeffMatrix = Drop[transformToMatrix[system,True], None, -1];
-
-	gridOptions = {
-		Frame->All,
-		FrameStyle->RGBColor[0.94,0.94,0.94],
-		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
-		Spacings->{10,3},
-		ItemSize->Fit,
-		Alignment->Center
-	};
-
-	If[SquareMatrixQ[coeffMatrix]&&Det[coeffMatrix]!=0,
-		(* se il sistema è risolvibile, ricava la soluzione e la mostra sotto forma di sistema; altrimenti mostra il sistema in input indicando se è impossibile o indeterminato *)
-		lhss = Level[#, 1][[1]]& /@ system;
-		variables = Variables[lhss];
-		answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
-		Grid[{{"Hai risolto correttamente l'intero esercizio!\nIl Metodo di Gauss non ha pi\[UGrave] segreti per te!"},{displayEquationSystem[answer]}},gridOptions],
-		Grid[{{displayEquationSystem[system], If[SameQ[Solve[system],{}],"Sistema impossibile","Sistema indeterminato"]}},gridOptions]
-	]
 ];
 
 (* FUNZIONI D'APPOGGIO *)
