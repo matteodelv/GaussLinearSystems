@@ -141,7 +141,7 @@ plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 	points = {Red, PointSize[Large], Point[{x,y,z} /. sols]};
 	(* crea i plot per i piani relativi ad ogni equazione *)
 	plotEq1 = Plot3D[z /. Solve[eq1], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[1.0,1.0,0,0.4],PlotLegends->{eq1//TraditionalForm}];
-	plotEq2 = Plot3D[z /. Solve[eq2], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[0.6,0.2,1.0,0.4],PlotLegends->{eq2//TraditionalForm}];
+	plotEq2 = Plot3D[z /. Solve[eq2], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[0.55,0.87,0.64,0.4],PlotLegends->{eq2//TraditionalForm}];
 	plotEq3 = Plot3D[z /. Solve[eq3], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[0.99,0.47,1.0,0.4],PlotLegends->{eq3//TraditionalForm}];
 	(* mostra i plot e i punti per le soluzioni *)
 	Show[plotEq1,plotEq2,plotEq3,Graphics3D[{points}],ImageSize->400]
