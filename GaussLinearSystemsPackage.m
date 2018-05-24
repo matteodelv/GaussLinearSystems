@@ -14,18 +14,16 @@ BeginPackage["GaussLinearSystemsPackage`"];
 Unprotect["GaussLinearSystemsPackage`*"];
 ClearAll["GaussLinearSystemsPackage`*"];
 
+(* Funzioni principali *)
+fattorizzazioneLU::usage = "Implementazione della Fattorizzazione LU con pivoting parziale. Partendo da una matrice quadrata A ed un vettore b, ritorna le matrici L ed U, la matrice di permutazione P ed il vettore b' permutato";
 plotLinearSystem2::usage = "Permette di mostrare graficamente la soluzione di un sistema di due equazioni di primo grado in due incognite";
 plotLinearSystem3::usage = "Permette di mostrare graficamente la soluzione di un sistema di tre equazioni di primo grado in tre incognite";
-displayEquationSystem::usage = "Permette la visualizzazione di una lista di equazioni sotto forma di sistema";
-highlightMatrixElements::usage = "Applica gli stili ad una matrice per evidenziare coefficienti e termini noti";
-calculateMatrixDims::usage = "Restituisce la dimensioni (righe, colonne) di una matrice";
-transformToMatrix::usage = "Partendo da un sistema di equazioni, restituisce la matrice associata";
-getRandomSystem::usage = "Restituisce un sistema di equazioni random tra quelli presenti nel dataset";
+
+(* Funzioni esercizi *)
 exerciseSystemToMatrix::usage = "Mostra l'esercizio in cui viene visualizzato un sistema di equazioni random e l'utente deve trasformarlo nella matrice associata";
-exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in un viene visualizzato un sistema di equazioni ridotto con Gauss e l'utente deve ricostruire il sistema ridotto associato";
 exerciseTriangularizeMatrix::usage = "Mostra l'esercizio in cui viene visualizzata una matrice (relativa ad un sistema random) e l'utente deve applicare il Metodo di Gauss per inserire la matrice ridotta associata";
+exerciseReducedMatrixToSystem::usage = "Mostra l'esercizio in un viene visualizzato un sistema di equazioni ridotto con Gauss e l'utente deve ricostruire il sistema ridotto associato";
 exerciseFinalGauss::usage = "Mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo";
-fattorizzazioneLU::usage = "Implementazione della Fattorizzazione LU con pivoting parziale. Partendo da una matrice quadrata A ed un vettore b, ritorna le matrici L ed U, la matrice di permutazione P ed il vettore b' permutato";
 diagonalMatrixQuestion::usage = "Domanda: Trovare la diagonale di una matrice";
 rowColumnQuestion::usage = "Domanda: Trovare quante righe/colonne possiede la matrice indicata";
 indexQuestion::usage = "Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore. ";
@@ -35,9 +33,16 @@ questionsExercise::usage = "Gestisce la casualit\[AGrave] delle domande, la corr
 finalExerciseRandomAnswers::usage = "Si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale";
 finalExerciseFoundAnswer::usage = "Si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta";
 
+(* Funzioni d'appoggio *)
+displayEquationSystem::usage = "Permette la visualizzazione di una lista di equazioni sotto forma di sistema";
+highlightMatrixElements::usage = "Applica gli stili ad una matrice per evidenziare coefficienti e termini noti";
+calculateMatrixDims::usage = "Restituisce la dimensioni (righe, colonne) di una matrice";
+transformToMatrix::usage = "Partendo da un sistema di equazioni, restituisce la matrice associata";
+getRandomSystem::usage = "Restituisce un sistema di equazioni random tra quelli presenti nel dataset";
 oneElementList::usage = "Funzione d'appoggio necessaria per mantenere l'invariante di una lista da un singolo elemento";
 stringInputToSystem::usage = "Funzione che si occupa di trasformare un insieme di equazioni in input in un sistema di equazioni valutabili da Mathematica";
 
+(* variabili riservate ai sistemi *)
 t::usage = "";
 x::usage = "";
 y::usage = "";
@@ -45,118 +50,105 @@ z::usage = "";
 
 Begin["`Private`"];
 
+(* Disattivazione warnings *)
 Off[Solve::svars];
 Off[General::shdw];
 Off[Set::setraw];
+
+(* Impostazione della directory del notebook come radice *)
 SetDirectory[NotebookDirectory[]];
 
-(*Funzione che permette di mostrare graficamente la soluzione 
-di un sistema di due equazioni di primo grado in due incognite *)
+(* FUNZIONI PRINCIPALI *)
+
+(* Fattorizzazione LU con pivoting parziale;
+@PARAM A = matrice quadrata da fattorizzare
+@PARAM b = vettore dei termini noti *)
+fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
+	(* se la matrice non è quadrata oppure il determinate è zero, la fattorizzazione LU non è applicabile *)
+	If[Not[SquareMatrixQ[A]],Return[{Null,Null,Null,Null}]];
+	If[SameQ[Det[A],0],Return[{Null,Null,Null,Null}]];
+
+	(* inizializza n: dimensione della matrice, P: matrice di permutazione, L: matrice triangolare inferiore *)
+	n = Length[A];
+	matriceEdited = A;
+	P = IdentityMatrix[n];
+	L = ArrayReshape[ConstantArray[0,n*n],{n, n}];
+
+	For[i=1,i<n,i++,
+		(* considera gli elementi sotto la diagonale principale (esso compreso) della colonna i-esima *)
+		subColonna = matriceEdited[[All,i]][[i;;]];
+		(* individua il massimo elemento in valore assoluto *)
+		candidatePivot = Max[Abs[subColonna]];
+		(* ricava la posizione del possibile pivot RELATIVA alla sotto colonna *)
+		pivotIndex = FirstPosition[Abs[matriceEdited[[All,i]]][[i;;]],candidatePivot][[1]];
+		(* rende la posizione ASSOLUTA rispetto all'intera matrice *)
+		pivotIndex = pivotIndex+i-1;
+		(* ricava il pivot *)
+		pivot = matriceEdited[[pivotIndex,i]];
+
+		If[Not[Equal[i,pivotIndex]],
+			(* se il pivot NON è già quello sulla diagonale principale, scambia le righe e aggiorna la matrice di permutazione *)
+			matriceEdited = Permute[matriceEdited,Cycles[{{i,pivotIndex}}]];
+			P = Permute[P, Cycles[{Flatten[{i,pivotIndex}]}]];
+		];
+		For[k=i+1,k<=n,k++,
+			If[Not[Equal[matriceEdited[[k,i]],0]],
+				(* se il pivot non è 0, calcola lambda, applica la mossa di Gauss a tutti gli elementi della riga k-esima e aggiorna L *)
+				lambda = (matriceEdited[[k,i]]/pivot);
+				L[[k,i]] = lambda;
+				matriceEdited[[k]] = matriceEdited[[k]]-lambda*matriceEdited[[i]];
+			];
+		];
+		(* se è avvenuto uno scambio di righe, anche gli opportuni elementi di L vanno permutati *)
+		If[Not[Equal[i,pivotIndex]]&&i>=2,
+			L[[i;;n,1;;i-1]]=Permute[L[[i;;n,1;;i-1]],Cycles[{{1,pivotIndex-i+1}}]];
+		];
+	];
+	(* U è la matrice triangolare superiore ottenuta dalla fattorizzazione *)
+	U = matriceEdited;
+	(* aggiunge la matrice diagonale ad L *)
+	L=L+IdentityMatrix[n];
+	(* calcola il vettore b aggiornato applicando la formula L^(-1)*P*b *)
+	bPerm = Inverse[L].P.b;
+	Return[{L,U,P,bPerm}];
+];
+
+(* Funzione che permette di mostrare graficamente la soluzione
+di un sistema di due equazioni di primo grado in due incognite;
+@PARAM eq1 = prima equazione in x e y
+@PARAM eq2 = seconda equazione in x e y *)
 plotLinearSystem2[eq1_, eq2_] := Module[{solutions, points},
+	(* calcola le soluzioni *)
 	solutions = Solve[{eq1,eq2}];
+	(* crea i punti relativi alle soluzioni *)
 	points = {Blue, PointSize[Large], Point[{x,y}/.solutions]};
+	(* crea i plot per le rette relative ad ogni equazione *)
 	plotEq1 = Plot[y /. Solve[eq1], {x,-10,10},AspectRatio->1,PlotStyle->Red,PlotLegends->{eq1//TraditionalForm}];
 	plotEq2 = Plot[y /. Solve[eq2], {x,-10,10},AspectRatio->1,PlotStyle->Orange,PlotLegends->{eq2//TraditionalForm}];
+	(* mostra i plot e i punti delle soluzioni *)
 	Show[plotEq1, plotEq2, Graphics[{points}], ImageSize->400,Background->White]
 ];
 
-(* Funzione che permette di mostrare graficamente la soluzione 
-di un sistema di tre equazioni di primo grado in tre incognite *)
+(* Funzione che permette di mostrare graficamente la soluzione
+di un sistema di tre equazioni di primo grado in tre incognite;
+@PARAM eq1 = prima equazione in x, y e z
+@PARAM eq2 = seconda equazione in x, y e z
+@PARAM eq3 = terza equazione in x, y e z *)
 plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
+	(* calcola le soluzioni *)
 	sols = Solve[{eq1,eq2,eq3}];
+	(* crea i punti relativi alle soluzioni *)
 	points = {Red, PointSize[Large], Point[{x,y,z} /. sols]};
+	(* crea i plot per i piani relativi ad ogni equazione *)
 	plotEq1 = Plot3D[z /. Solve[eq1], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[1.0,1.0,0,0.4],PlotLegends->{eq1//TraditionalForm}];
 	plotEq2 = Plot3D[z /. Solve[eq2], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[0.6,0.2,1.0,0.4],PlotLegends->{eq2//TraditionalForm}];
 	plotEq3 = Plot3D[z /. Solve[eq3], {x,-10,10}, {y,-10,10},AspectRatio->1,Mesh->None,PlotStyle->RGBColor[0.99,0.47,1.0,0.4],PlotLegends->{eq3//TraditionalForm}];
+	(* mostra i plot e i punti per le soluzioni *)
 	Show[plotEq1,plotEq2,plotEq3,Graphics3D[{points}],ImageSize->400]
 ];
 
-(*Funzione che data in input una lista di equazione la visualizza sotto forma di sistema*)
-displayEquationSystem[eqs_] := Module[{eqsFF},
-	eqsFF = TraditionalForm /@ HoldForm /@ eqs;
-	DisplayForm@RowBox[{StyleBox["{", SpanMaxSize->Infinity], Column[eqsFF, Alignment->Left]}]
-];
+(* FUNZIONI ESERCIZI *)
 
-(* Funzione che permette di evidenziare gli elementi di una matrice *)
-highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
-	lastCol = 1;
-	For[i=1,i<=Length[matrix],i++,
-		If[Length[matrix[[i]]] > lastCol,lastCol = Length[matrix[[i]]]];
-	];
-	editedMatrix = MapAt[Style[#,RGBColor[0.13,0.52,0.96]]&,matrix,{{Range[1,Length[matrix]],Range[1,lastCol-1]}}];
-	editedMatrix = MapAt[Style[#,RGBColor[0.14,0.61,0.14]]&,editedMatrix,{{Range[1,Length[matrix]],lastCol}}];
-	Return[editedMatrix];
-];
-
-(* Funzione che restituisce la dimensioni (righe, colonne) di una matrice *)
-calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
-	rows = Length[system];
-	lhsParts = Level[#,1][[1]] & /@ system;
-	cols = Length[Variables[lhsParts]]+1;
-	Return[{rows,cols}];
-];
-
-(* Restituisce un sistema random tra quelli presenti. Funzione utilizzata negli esercizi*)
-getRandomSystem[solvable_:True] := Module[{systems},
-	systems = {
-		{3x-2y==-1, 4x-5y==-2} (* 2 equazioni in 2 incognite *),
-		{5y+x==3, 2x-4y==-8},
-		{2x-5y==7, x-3y==1},
-		{2x-y==0, x+3y==1},
-		{5x+y==20, 5x+7y==20},
-		{2x-3y==4, -2x+4y==1},
-		{2x-y==7, 4x+3y==4},
-		{1/3x+4y==5, -x+1/2y==-5/2},
-		{x-1/2y==5/3, 3/2x-3/8y==1},
-		{z+3x-2y==0, z+x-y==0, 4x+2y-3z==5} (* 3 equazioni in 3 incognite *),
-		{x+y-z==6, y+x==3, x+z==0},
-		{3x+y+z==3, 6x-2y+z==1, 3y+3x+3z==7},
-		{x+3z+2y==1, 3x+4y+6z==3, 5y-3z+10x==-4},
-		{2x+3y-z==0, x-y+z==1, 3x+2y+4z==-3},
-		{x+z==1, y+1/2z==-1, 2x+z==0},
-		{-x+y-z==1, 10x-5y+10z==-3, 2x+y+z==2},
-		{3x-y+2z==10, 6x+4z-y==17, x-2z+2y==-5},
-		{y+z-t==1, x-2y+t==1, 3x+2y-z-t==0, x-z==-2} (* 4 equazioni in 4 incognite *),
-		{2t+x+3y+5z==4, 4t+2y+8z==8, t+2x+2y+3z==5, x+y+z==4},
-		{2t-3x+4z==-1, x+2y-t==2, 3y+2z+t==4, x+y+t==0}
-	};
-	If[Not[solvable],
-		systems = Join[systems, {
-			{1/2x-y+2t==0, y+2z-2t==1, x+y+6z-2t==3, y-z+3t==0} (* impossibile *),
-			{3x+2y-z==0, x+y+z==3} (* indeterminato *),
-			{x-2y+z==1, -t+3y+z==2, 7t+7z==7, y+2z==3} (* impossibile *),
-			{t-x+y==1, 2t-y==0, -t+z==-1} (* indeterminato *),
-			{2x+3y+t==6, -9y+2z-t==3, -z+7t==5} (* indeterminato *),
-			{x+y==0, x+y==1} (* impossibile *),
-			{x-y+z==2, -x+y+z==1} (* indeterminato *)
-		}];
-	];
-	Return[RandomChoice[systems]];
-];
-(*Funzione che prende in input un sistema di equazioni e restituisce la matrice associata*)
-transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
-	If[withTerms,
-		system = Level[#,1][[1]] & /@ eqs;
-		terms = Level[#,1][[2]] & /@ eqs,
-		system = eqs
-	];
-	incognite = Sort[Variables[system]];
-	rules = CoefficientRules[system,incognite];
-	matrix = {};
-	For[i=1,i<=Length[rules],i++,
-		row = {};
-		For[j=1,j<=Length[incognite],j++,
-			key = Normal[SparseArray[{j->1},Length[incognite]]];
-			If[MemberQ[Keys[rules[[i]]],key],
-				AppendTo[row,Lookup[rules[[i]],Key[key]]],
-				AppendTo[row,0]
-			];
-		];
-		If[withTerms,AppendTo[row,terms[[i]]]];
-		AppendTo[matrix,row];
-	];
-	Return[matrix];
-];
 (*Funzione esercizio: che dato un sistema di equazioni random l'utente deve trasformarlo nella matrice associata*)
 exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
 	{dims, rowCount, colCount, checkButtonSystemToMatrix, restartButton, gridOptions, system, inputMatrixShown, matrix, inputMatrix,
@@ -226,21 +218,95 @@ exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
 ];
 SetAttributes[exerciseSystemToMatrix,HoldRest];
 
+exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_:0] := DynamicModule[
+	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4],
+	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButtonTriangular, restartButton, gridOptions, output},
+
+	systemMatrix = transformToMatrix[system,True];
+	{rows,cols} = calculateMatrixDims[system];
+	A = Drop[systemMatrix, None, -1];
+	b = Take[systemMatrix, All, -1];
+	{L,U,P,newB} = fattorizzazioneLU[A,b];
+
+	gridOptions = {
+		Frame->All,
+		FrameStyle->RGBColor[0.94,0.94,0.94],
+		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+		Spacings->{10,3},
+		ItemSize->Fit,
+		Alignment->{{Right,Left}}
+	};
+
+	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]], If[finalExercise, result=5],
+		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
+		inputMatrix = ConstantArray[0, rows*cols];
+		inputMatrixShown = Partition[
+			Table[With[{i=i},
+				Dynamic[Framed[
+					InputField[Dynamic[inputMatrix[[i]]],FieldSize->{2,1},Appearance->"Frameless",
+						Background->If[shown,
+							If[SameQ[inputMatrix[[i]],UFlattened[[i]]],okColor,wrongColor],
+							White]
+						],
+						FrameStyle->If[shown,
+							If[SameQ[inputMatrix[[i]],UFlattened[[i]]],okColor,wrongColor],
+							Automatic],
+						FrameMargins->None
+					]]
+				], {i,rows*cols}
+			],cols];
+		For[i=2,i<=Length[inputMatrixShown],i++,
+			inputMatrixShown[[i]][[1;;i-1]]=0;
+		];
+		checkButtonTriangular = Button[Style["Verifica!",24],
+			shown=False;
+			If[MatchQ[UFlattened,inputMatrix],
+				If[finalExercise, oldResult = result;result = 3];
+				dialogImage = Import["images/checkmark.png"];
+				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
+				If[finalExercise, oldResult = result;result = 2];
+				dialogImage = Import["images/error.png"];
+				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
+				shown=True;
+			];
+			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
+				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
+			ImageSize->{200,50}];
+		If[Not[finalExercise],
+			restartButton = Button[Style["Ricomincia!",24],
+				shown=False;
+				NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
+				SelectionEvaluate[EvaluationNotebook[]],
+				ImageSize->{200,50}];
+		];
+
+		output = {
+			{highlightMatrixElements[systemMatrix]//MatrixForm,inputMatrixShown//MatrixForm},
+			{checkButtonTriangular,If[Not[finalExercise],restartButton,SpanFromLeft]}
+		};
+		If[Not[finalExercise],
+			Grid[output,gridOptions],
+			Grid[output, gridOptions]
+		]
+	]
+];
+SetAttributes[exerciseTriangularizeMatrix, HoldRest];
+
 exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicModule[
 	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, prova, output,
 	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False, backup,provaMatrice, restartButton, gridOptions, dialogImage, dialogText},
-	
+
 	If[SameQ[system, Null], randomSystem = getRandomSystem[], randomSystem = system];
 	{rows, cols} = calculateMatrixDims[randomSystem];
 	matrix = transformToMatrix[randomSystem,True];
-	
+
 	A = Drop[matrix, None, -1];
 	b = Take[matrix, All, -1];
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
 	reducedMatrix = Join[U, ArrayReshape[newB,{rows,1}],2];
 	prova = ConstantArray[Null, rows];
 	provaMatrice = ArrayReshape[ConstantArray[0,rows*cols],{rows, cols}];
-	
+
 	inputSystem = ConstantArray[Null, rows];
 	inputSystemShown = Partition[
 			Table[With[{i=i},
@@ -285,7 +351,7 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 			shown=False;
 			NotebookFind[EvaluationNotebook[], "exerciseReducedMatrixToSystemCellTag",All,CellTags];
 			SelectionEvaluate[EvaluationNotebook[]],
-			ImageSize->{200,50}];	
+			ImageSize->{200,50}];
 	];
 	gridOptions = {
 		Frame->All,
@@ -306,114 +372,41 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 ];
 SetAttributes[exerciseReducedMatrixToSystem, HoldRest];
 
-exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_:0] := DynamicModule[
-	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4], 
-	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButtonTriangular, restartButton, gridOptions, output},
-	
-	systemMatrix = transformToMatrix[system,True];
-	{rows,cols} = calculateMatrixDims[system];
-	A = Drop[systemMatrix, None, -1];
-	b = Take[systemMatrix, All, -1];
-	{L,U,P,newB} = fattorizzazioneLU[A,b];
-	
-	gridOptions = {
-		Frame->All,
-		FrameStyle->RGBColor[0.94,0.94,0.94],
-		ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
-		Spacings->{10,3},
-		ItemSize->Fit,
-		Alignment->{{Right,Left}}
-	};
-	
-	If[MatchQ[{L,U,P,newB}, ConstantArray[Null,4]], If[finalExercise, result=5],
-		UFlattened = Flatten[Join[U,ArrayReshape[newB,{rows,1}],2]];
-		inputMatrix = ConstantArray[0, rows*cols];
-		inputMatrixShown = Partition[
-			Table[With[{i=i},
-				Dynamic[Framed[
-					InputField[Dynamic[inputMatrix[[i]]],FieldSize->{2,1},Appearance->"Frameless",
-						Background->If[shown,
-							If[SameQ[inputMatrix[[i]],UFlattened[[i]]],okColor,wrongColor],
-							White]
-						],
-						FrameStyle->If[shown,
-							If[SameQ[inputMatrix[[i]],UFlattened[[i]]],okColor,wrongColor],
-							Automatic],
-						FrameMargins->None
-					]]
-				], {i,rows*cols}
-			],cols];
-		For[i=2,i<=Length[inputMatrixShown],i++,
-			inputMatrixShown[[i]][[1;;i-1]]=0;
-		];
-		checkButtonTriangular = Button[Style["Verifica!",24],
-			shown=False;
-			If[MatchQ[UFlattened,inputMatrix],
-				If[finalExercise, oldResult = result;result = 3];
-				dialogImage = Import["images/checkmark.png"];
-				dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
-				If[finalExercise, oldResult = result;result = 2];
-				dialogImage = Import["images/error.png"];
-				dialogText = Style["SBAGLIATO. Riprova!",20,Red];
-				shown=True;
-			];
-			MessageDialog[Column[{dialogImage,dialogText}, Spacings->{2,4}, Alignment->Center,
-				Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]],
-			ImageSize->{200,50}];
-		If[Not[finalExercise],
-			restartButton = Button[Style["Ricomincia!",24],
-				shown=False;
-				NotebookFind[EvaluationNotebook[], "exerciseTriangolarizzazioneCellTag",All,CellTags];
-				SelectionEvaluate[EvaluationNotebook[]],
-				ImageSize->{200,50}];
-		];
-		
-		output = {
-			{highlightMatrixElements[systemMatrix]//MatrixForm,inputMatrixShown//MatrixForm},
-			{checkButtonTriangular,If[Not[finalExercise],restartButton,SpanFromLeft]}
-		};
-		If[Not[finalExercise],
-			Grid[output,gridOptions],
-			Grid[output, gridOptions]
-		]
-	]
-];
-SetAttributes[exerciseTriangularizeMatrix, HoldRest];
+(* Funzione che mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo *)
+exerciseFinalGauss[] := DynamicModule[
+	{inputList = {}, startButton, restartButton, step=0, out, oldStep=0},
 
-(*Fattorizzazione LU: *)
-fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
-	If[Not[SquareMatrixQ[A]],Return[{Null,Null,Null,Null}]];
-	If[SameQ[Det[A],0],Return[{Null,Null,Null,Null}]];
+	(* crea i pulsanti per iniziare l'esercizio o per ricominciare *)
+	startButton = Dynamic[Button[Style["Inizia!",20], stringInputToSystem[inputList]; step=1, Enabled->If[step!=0,False,True],ImageSize->{180,40}]];
+	restartButton = Button[Style["Ricomincia",20], inputList = {}; step=0,ImageSize->{180,40}];
 
-	n = Length[A];
-	matriceEdited = A;
-	P = IdentityMatrix[n];
-	L = ArrayReshape[ConstantArray[0,n*n],{n, n}];
-	For[i=1,i<n,i++,
-		subColonna = matriceEdited[[All,i]][[i;;]];
-		candidatePivot = Max[Abs[subColonna]];
-		pivotIndex = FirstPosition[Abs[matriceEdited[[All,i]]][[i;;]],candidatePivot][[1]];
-		pivotIndex = pivotIndex+i-1;
-		pivot = matriceEdited[[pivotIndex,i]];
-		If[Not[Equal[i,pivotIndex]],
-			matriceEdited = Permute[matriceEdited,Cycles[{{i,pivotIndex}}]];
-			P = Permute[P, Cycles[{Flatten[{i,pivotIndex}]}]];
-		];
-		For[k=i+1,k<=n,k++,
-			If[Not[Equal[matriceEdited[[k,i]],0]],
-				lambda = (matriceEdited[[k,i]]/pivot);
-				L[[k,i]] = lambda;
-				matriceEdited[[k]] = matriceEdited[[k]]-lambda*matriceEdited[[i]];
-			];
-		];
-		If[Not[Equal[i,pivotIndex]]&&i>=2,
-			L[[i;;n,1;;i-1]]=Permute[L[[i;;n,1;;i-1]],Cycles[{{1,pivotIndex-i+1}}]];
-		];
-	];
-	U = matriceEdited;
-	L=L+IdentityMatrix[n];
-	bPerm = Inverse[L].P.b;
-	Return[{L,U,P,bPerm}];
+	(* mostra la grid dinamica che cambia contenuto in base al passo corrente dell'esercizio (in base all'opportuna chiamata fatta nello switch);
+	inoltre, dopo il primo passo, l'input viene disabilitato per prevenire interferenze *)
+	Grid[{
+		{Dynamic[InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize->{40,2}, Enabled->If[step!=0, False,True]]],SpanFromLeft},
+		{Dynamic[startButton],restartButton,SpanFromLeft},
+		{Dynamic[
+			Switch[step,
+				0, "",
+				1, "Passo 1: Trasforma il sistema nella matrice associata",
+				2, "Passo 2: Applica il Metodo di Gauss per ridurre la matrice a gradini",
+				3, "Passo 3: Ricava il sistema associato alla matrice ridotta",
+				4, "Passo 4: Scegli la soluzione corretta",
+				5, "Sei arrivato alla fine!"]
+		],SpanFromLeft},
+		{Dynamic[
+			If[step!=oldStep,
+			Switch[step,
+				0, "",
+				1, exerciseSystemToMatrix[inputList, step],
+				2, exerciseTriangularizeMatrix[inputList, True, step,oldStep],
+				3, exerciseReducedMatrixToSystem[inputList, step,oldStep],
+				4, finalExerciseRandomAnswers[inputList, step,oldStep],
+				5, finalExerciseFoundAnswer[inputList]],""]
+		,TrackedSymbols:>{step}],SpanFromLeft}
+	},
+	Frame->All, FrameStyle->RGBColor[0.94, 0.94, 0.94], Spacings->{0,2}, ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],
+	ItemSize->{{Scaled[0.5],Scaled[0.5]}},Alignment->Center]
 ];
 
 (* Data una matrice generata random viene richiesto all'utente di selezionarne la diagonale*)
@@ -428,8 +421,9 @@ diagonalMatrixQuestion[]:= Module[{index, randomElements,matrix, answers,solutio
 	wrongAnswers = RandomSample[Tuples[DeleteCases[randomElements,solution],index],3];
 	(*Unione della risposta esatta con le risposte sbagliate*)
 	answers = Join[{solution},wrongAnswers];
-	Return[{text,MatrixForm/@answers,solution//MatrixForm,matrix}]			
+	Return[{text,MatrixForm/@answers,solution//MatrixForm,matrix}]
 ];
+
 (*Funzione che data una matrice di grandezza casuale richiede all'utente quale delle due indica la colonna o la riga*)
 rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 	(*Generazione di una matrice non quadrata e della soluzione casuale tra riga e colonna*)
@@ -439,7 +433,7 @@ rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 	matrix = (row*column);
 	answers = {row, column, matrix, (row+column)};
 	solution = RandomChoice[{row,column}];
-	text = StringReplace["Quante righe ci sono in una matrice NRighe X NColonne ?", 
+	text = StringReplace["Quante righe ci sono in una matrice NRighe X NColonne ?",
 			{"NRighe"-> ToString[row],"NColonne"-> ToString[column]}];
 	If[MatchQ[solution,column],
 		text = StringReplace[text, "righe"->"colonne"]
@@ -448,7 +442,7 @@ rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 ];
 
 (*Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore*)
-indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,text,element, 
+indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,text,element,
 						answers,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, ind, subscriptIndex},
 	(*Generazione matrice di grandezza casuale e scelta casuale di una posizione*)
 	index = RandomSample[Range[4,6],2];
@@ -471,7 +465,7 @@ indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,
 			wrongAnswersColumn = RandomSample[Tuples[DeleteCases[Range[1,index[[2]]],column],1],3];
 			wrongAnswers = Join[wrongAnswersRow,wrongAnswersColumn,2];
 			ind = StringReplace["xy",{"x"->ToString[#[[1]]],"y"->ToString[#[[2]]]}] & /@ wrongAnswers;
-			wrongAnswers = Subscript["a","index"]/.{"index"->#} & /@ ind	
+			wrongAnswers = Subscript["a","index"]/.{"index"->#} & /@ ind
 	];
 	answers = Flatten[{solution, wrongAnswers}];
 	Return[{text,answers,solution,matrix}]
@@ -511,14 +505,14 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	{text,answers,solution,matrix} = question[];
 	answers = RandomSample[answers];
 	(*RadioButtonBar con le risposte e relativo appeareance in base alla domanda*)
-	If[MatchQ[question,diagonalMatrixQuestion], 
+	If[MatchQ[question,diagonalMatrixQuestion],
 		appearance="Horizontal",
 		appearance="Vertical"
 	];
 	radioAnswers= Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->appearance]];
 	(*Controllo della scelta effettuata*)
 	checkButton = Button[Style["Verifica!",24],
-		If[MatchQ[choice,solution],	
+		If[MatchQ[choice,solution],
 			dialogImage = Import["images/checkmark.png"];
 			dialogText = Style["CORRETTO. Bravo!",20,RGBColor[0.14,0.61,0.14]],
 			dialogImage = Import["images/error.png"];
@@ -548,24 +542,36 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 	grid
 ];
 
+(* Funzione che si occupa di generare le soluzioni random per il sistema dato in input nell'esercizio finale;
+@PARAM system = sistema di equazioni dato in input
+@PARAM result = indica lo step successivo dell'esercizio finale
+@PARAM oldResult = indica lo step precedente dell'esericizio finale
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
 finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
 	{solutions, lhss, variables, answer, answers={}, randomAnswer, radioAnswers, choice, checkButton, gridOptions, i, k, dialogImage, dialogText},
-	
+
+	(* calcola la soluzione reale *)
 	solutions = Solve[system];
 	lhss = Level[#, 1][[1]]& /@ system;
 	variables = Variables[lhss];
 	answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
+	(* genera una lista di 3 risposte random errate *)
 	For[i=1, i<=3, i++,
 		randomAnswer = {};
 		For[k=1, k<=Length[variables], k++,
+			(* le risposte random possono essere semplici numeri oppure frazioni, sia positivi che negativi *)
 			AppendTo[randomAnswer, StandardForm[variables[[k]]]==RandomChoice[{RandomInteger[{-20,20}]/RandomInteger[{1,20}], RandomInteger[{-20,20}]}]];
 		];
 		AppendTo[answers, randomAnswer];
 	];
+	(* permuta a caso le quattro risposte e trasformale in sistema *)
 	answers = Permute[AppendTo[answers,answer], RandomPermutation[4]];
 	answers = displayEquationSystem[#]& /@ answers;
+	(* crea i radio button associati alle risposte *)
 	radioAnswers = Dynamic[RadioButtonBar[Dynamic[choice],answers, Appearance->"Horizontal"]];
+	(* crea il pulsante per controllare la risposta scelta *)
 	checkButton = Button[Style["Verifica!",24],
+		(* se la risposta è giusta, l'utente può andare al passo successivo dell'esercizio; altrimenti rimane in quello corrente e viene mostrato un errore *)
 		If[SameQ[choice,displayEquationSystem[answer]], oldResult = result; result = 5,
 			oldResult = result; result = 4;
 			dialogImage = Import["images/error.png"];
@@ -582,14 +588,18 @@ finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
 		ItemSize->Fit,
 		Alignment->Center
 	};
+	(* mostra le risposte *)
 	Grid[{{radioAnswers,SpanFromLeft},{checkButton,SpanFromLeft}},gridOptions]
 ];
 SetAttributes[finalExerciseRandomAnswers, HoldRest];
 
+(* Funzione che si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta;
+@PARAM system = sistema di equazioni utilizzate nell'esercizio *)
 finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer, gridOptions,coeffMatrix},
+	(* calcola le soluzioni e ricava la matrice dei coefficienti *)
 	solutions = Solve[system];
 	coeffMatrix = Drop[transformToMatrix[system,True], None, -1];
-	
+
 	gridOptions = {
 		Frame->All,
 		FrameStyle->RGBColor[0.94,0.94,0.94],
@@ -598,8 +608,9 @@ finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer,
 		ItemSize->Fit,
 		Alignment->Center
 	};
-	
+
 	If[SquareMatrixQ[coeffMatrix]&&Det[coeffMatrix]!=0,
+		(* se il sistema è risolvibile, ricava la soluzione e la mostra sotto forma di sistema; altrimenti mostra il sistema in input indicando se è impossibile o indeterminato *)
 		lhss = Level[#, 1][[1]]& /@ system;
 		variables = Variables[lhss];
 		answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
@@ -608,48 +619,144 @@ finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer,
 	]
 ];
 
+(* FUNZIONI D'APPOGGIO *)
+
+(* Funzione che data in input una lista di equazione la visualizza sotto forma di sistema;
+@PARAM eqs = lista di equazioni (espressioni) *)
+displayEquationSystem[eqs_] := Module[{eqsFF},
+	(* applica prima HoldForm e poi TraditionalForm a ogni equazione *)
+	eqsFF = TraditionalForm /@ HoldForm /@ eqs;
+	(* mostra il sistema con la classica visualizzazione matematica *)
+	DisplayForm@RowBox[{StyleBox["{", SpanMaxSize->Infinity], Column[eqsFF, Alignment->Left]}]
+];
+
+(* Funzione che permette di evidenziare gli elementi di una matrice;
+@PARAM matrix = matrice da evidenziare *)
+highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
+	lastCol = 1;
+	(* calcola numero massimo di colonne *)
+	For[i=1,i<=Length[matrix],i++,
+		If[Length[matrix[[i]]] > lastCol,lastCol = Length[matrix[[i]]]];
+	];
+	(* colora i coefficienti della matrice di blu (dal primo al penultimo elemento di ogni riga) *)
+	editedMatrix = MapAt[Style[#,RGBColor[0.13,0.52,0.96]]&,matrix,{{Range[1,Length[matrix]],Range[1,lastCol-1]}}];
+	(* colora i termini noti della matrice di verde (l'ultimo elemento per ogni riga) *)
+	editedMatrix = MapAt[Style[#,RGBColor[0.14,0.61,0.14]]&,editedMatrix,{{Range[1,Length[matrix]],lastCol}}];
+	Return[editedMatrix];
+];
+
+(* Funzione che restituisce la dimensioni (righe, colonne) di una matrice, a partire da un sistema;
+@PARAM system = sistema di equazioni da cui ricavare la matrice *)
+calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
+	rows = Length[system];
+	(* per ogni equazione, considera la parte senza termine noto *)
+	lhsParts = Level[#,1][[1]] & /@ system;
+	(* calcola il numero di variabili, incrementate di 1, per ottenere il numero di colonne *)
+	cols = Length[Variables[lhsParts]]+1;
+	Return[{rows,cols}];
+];
+
+(* Funzione che prende in input un sistema di equazioni e restituisce la matrice associata;
+@PARAM eqs = lista di equazioni (espressioni)
+@PARAM withTerms = indica se le equazioni hanno termini noti *)
+transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
+	If[withTerms,
+		(* se withTerms = True, si ricavano i termini noti e la parte dell'equazione senza di essi *)
+		system = Level[#,1][[1]] & /@ eqs;
+		terms = Level[#,1][[2]] & /@ eqs,
+		(* altrimenti le espressioni sono già senza termini noti *)
+		system = eqs
+	];
+	(* ricava le incognite *)
+	incognite = Sort[Variables[system]];
+	(* ricava le associazioni tra incognita e coefficiente (nella forma {0,1,0}->3, ad esempio) *)
+	rules = CoefficientRules[system,incognite];
+	matrix = {};
+	(* crea la matrice *)
+	For[i=1,i<=Length[rules],i++,
+		row = {};
+		(* crea ogni riga *)
+		For[j=1,j<=Length[incognite],j++,
+			(* crea la chiave per ogni incognita, per risalire al suo coefficiente *)
+			key = Normal[SparseArray[{j->1},Length[incognite]]];
+			(* se la chiave è nella lista delle regole, allora ricava il coefficiente e lo mette nella riga; altrimenti mette 0 *)
+			If[MemberQ[Keys[rules[[i]]],key],
+				AppendTo[row,Lookup[rules[[i]],Key[key]]],
+				AppendTo[row,0]
+			];
+		];
+		(* se presenti, aggiunge ogni termine noto alla fine di ogni riga *)
+		If[withTerms,AppendTo[row,terms[[i]]]];
+		(* inserisce la riga creata nella matrice *)
+		AppendTo[matrix,row];
+	];
+	Return[matrix];
+];
+
+(* Restituisce un sistema random tra quelli presenti. Funzione utilizzata negli esercizi;
+@PARAM solvable = permette di discrimiare tra sistemi risolvibili o anche non risolvibili *)
+getRandomSystem[solvable_:True] := Module[{systems},
+	(* definisce una lista di sistemi risolvibili *)
+	systems = {
+		{3x-2y==-1, 4x-5y==-2} (* 2 equazioni in 2 incognite *),
+		{5y+x==3, 2x-4y==-8},
+		{2x-5y==7, x-3y==1},
+		{2x-y==0, x+3y==1},
+		{5x+y==20, 5x+7y==20},
+		{2x-3y==4, -2x+4y==1},
+		{2x-y==7, 4x+3y==4},
+		{1/3x+4y==5, -x+1/2y==-5/2},
+		{x-1/2y==5/3, 3/2x-3/8y==1},
+		{z+3x-2y==0, z+x-y==0, 4x+2y-3z==5} (* 3 equazioni in 3 incognite *),
+		{x+y-z==6, y+x==3, x+z==0},
+		{3x+y+z==3, 6x-2y+z==1, 3y+3x+3z==7},
+		{x+3z+2y==1, 3x+4y+6z==3, 5y-3z+10x==-4},
+		{2x+3y-z==0, x-y+z==1, 3x+2y+4z==-3},
+		{x+z==1, y+1/2z==-1, 2x+z==0},
+		{-x+y-z==1, 10x-5y+10z==-3, 2x+y+z==2},
+		{3x-y+2z==10, 6x+4z-y==17, x-2z+2y==-5},
+		{y+z-t==1, x-2y+t==1, 3x+2y-z-t==0, x-z==-2} (* 4 equazioni in 4 incognite *),
+		{2t+x+3y+5z==4, 4t+2y+8z==8, t+2x+2y+3z==5, x+y+z==4},
+		{2t-3x+4z==-1, x+2y-t==2, 3y+2z+t==4, x+y+t==0}
+	};
+	(* se solvable = False, aggiunge anche sistemi impossibili/indeterminati *)
+	If[Not[solvable],
+		systems = Join[systems, {
+			{1/2x-y+2t==0, y+2z-2t==1, x+y+6z-2t==3, y-z+3t==0} (* impossibile *),
+			{3x+2y-z==0, x+y+z==3} (* indeterminato *),
+			{x-2y+z==1, -t+3y+z==2, 7t+7z==7, y+2z==3} (* impossibile *),
+			{t-x+y==1, 2t-y==0, -t+z==-1} (* indeterminato *),
+			{2x+3y+t==6, -9y+2z-t==3, -z+7t==5} (* indeterminato *),
+			{x+y==0, x+y==1} (* impossibile *),
+			{x-y+z==2, -x+y+z==1} (* indeterminato *)
+		}];
+	];
+	(* ritorna un sistema random tra i precedenti *)
+	Return[RandomChoice[systems]];
+];
+
+(* Funzione che garantisce la presenza di un unico elemento in una lista;
+@PARAM list = lista che deve contenere un solo elemento
+@PARAM element = elemento da inserire
+- viene usato HoldAll per non valutare i parametri e simulare un passaggio per riferimento *)
 oneElementList[list_, element_] := Module[{},
+	(* se list ha già un elemento viene resettata *)
 	If[Not[SameQ[list, {}]], list = {}];
+	(* il nuovo elemento viene inserito *)
 	list = Insert[list, element, 1];
 ];
 SetAttributes[oneElementList, HoldAll];
 
+(* Funzione che manipola una stringa di equazioni separate da virgola e le trasforma in equazioni valutabili
+@PARAM list = lista di equazioni da manipolare
+- viene usato HoldAll per non valutare il parametro e simulare un passaggio per riferimento *)
 stringInputToSystem[list_] := Module[{},
+	(* per ogni equazione, trasforma il singolo = in quello doppio necessario per Mathematica *)
 	list = StringReplace[#,"="->"\[Equal]"]& @ list;
+	(* splitta la stringa nelle singole equazioni e poi le trasforma in espressioni valutabili *)
 	list = ToExpression @ Flatten @ StringSplit[#, ","] & @ list;
 ];
 SetAttributes[stringInputToSystem, HoldAll];
-
-exerciseFinalGauss[] := DynamicModule[
-	{inputList = {}, startButton, restartButton, step=0, out, oldStep=0},
-	
-	startButton = Dynamic[Button[Style["Inizia!",20], stringInputToSystem[inputList]; step=1, Enabled->If[step!=0,False,True],ImageSize->{180,40}]];
-	restartButton = Button[Style["Ricomincia",20], inputList = {}; step=0,ImageSize->{180,40}];
-	
-	Grid[{
-		{Dynamic[InputField[Dynamic[Null, oneElementList[inputList,#]&], String, FieldSize->{40,2}, Enabled->If[step!=0, False,True]]],SpanFromLeft},
-		{Dynamic[startButton],restartButton,SpanFromLeft},
-		{Dynamic[
-			Switch[step,
-			0, "",
-			1, "Passo 1: Trasforma il sistema nella matrice associata",
-			2, "Passo 2: Applica il Metodo di Gauss per ridurre la matrice a gradini",
-			3, "Passo 3: Ricava il sistema associato alla matrice ridotta",
-			4, "Passo 4: Scegli la soluzione corretta",
-			5, "Sei arrivato alla fine!"]
-		],SpanFromLeft},
-		{Dynamic[
-			If[step!=oldStep,
-			Switch[step,
-			0, "",
-			1, exerciseSystemToMatrix[inputList, step],
-			2, exerciseTriangularizeMatrix[inputList, True, step,oldStep],
-			3, exerciseReducedMatrixToSystem[inputList, step,oldStep],
-			4, finalExerciseRandomAnswers[inputList, step,oldStep],
-			5, finalExerciseFoundAnswer[inputList]],""]
-		,TrackedSymbols:>{step}],SpanFromLeft}
-	},Frame->All, FrameStyle->RGBColor[0.94, 0.94, 0.94], Spacings->{0,2},ItemStyle->Directive[FontFamily->"Roboto Condensed", FontSize->28],ItemSize->{{Scaled[0.5],Scaled[0.5]}},Alignment->Center]
-];
 
 End[];
 Protect["GaussLinearSystemsPackage`*"]
