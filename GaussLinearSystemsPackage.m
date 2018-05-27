@@ -41,6 +41,7 @@ transformToMatrix::usage = "Partendo da un sistema di equazioni, restituisce la 
 getRandomSystem::usage = "Restituisce un sistema di equazioni random tra quelli presenti nel dataset";
 oneElementList::usage = "Funzione d'appoggio necessaria per mantenere l'invariante di una lista da un singolo elemento";
 stringInputToSystem::usage = "Funzione che si occupa di trasformare un insieme di equazioni in input in un sistema di equazioni valutabili da Mathematica";
+checkInputFormat::usage = "Funzione che si occupa di controllare il formato del sistema inserito nell'esercizio finale";
 
 (* variabili riservate ai sistemi *)
 t::usage = "";
@@ -62,7 +63,8 @@ SetDirectory[NotebookDirectory[]];
 
 (* Fattorizzazione LU con pivoting parziale;
 @PARAM A = matrice quadrata da fattorizzare
-@PARAM b = vettore dei termini noti *)
+@PARAM b = vettore dei termini noti 
+Esempio: usata in exerciseTriangularizeMatrix, exerciseReducedMatrixToSystem, exerciseFinalGauss *)
 fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidatePivot,subColonna,pivotIndex,lambda,i,k},
 	(* se la matrice non \[EGrave] quadrata oppure il determinate \[EGrave] zero, la fattorizzazione LU non \[EGrave] applicabile *)
 	If[Not[SquareMatrixQ[A]],Return[{Null,Null,Null,Null}]];
@@ -72,11 +74,11 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 	n = Length[A];
 	matriceEdited = A;
 	P = IdentityMatrix[n];
-	L = ArrayReshape[ConstantArray[0,n*n],{n, n}];
+	L = ArrayReshape[ConstantArray[0,n*n],{n, n}]; (* ArrayReshape trasforma una lista di n^2 elementi in una matrice n*n *)
 
 	For[i=1,i<n,i++,
 		(* considera gli elementi sotto la diagonale principale (esso compreso) della colonna i-esima *)
-		subColonna = matriceEdited[[All,i]][[i;;]];
+		subColonna = matriceEdited[[All,i]][[i;;]]; 
 		(* individua il massimo elemento in valore assoluto *)
 		candidatePivot = Max[Abs[subColonna]];
 		(* ricava la posizione del possibile pivot RELATIVA alla sotto colonna *)
@@ -88,6 +90,7 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 
 		If[Not[Equal[i,pivotIndex]],
 			(* se il pivot NON \[EGrave] gi\[AGrave] quello sulla diagonale principale, scambia le righe e aggiorna la matrice di permutazione *)
+			(* Cycles prende gli indici delle righe da scambiare e, insieme alla Permute, le scambia in modod ciclico *)
 			matriceEdited = Permute[matriceEdited,Cycles[{{i,pivotIndex}}]];
 			P = Permute[P, Cycles[{Flatten[{i,pivotIndex}]}]];
 		];
@@ -116,7 +119,8 @@ fattorizzazioneLU[A_,b_] := Module[{L,U,P,bPerm,matriceEdited,n,pivot,candidateP
 (* Funzione che permette di mostrare graficamente la soluzione
 di un sistema di due equazioni di primo grado in due incognite;
 @PARAM eq1 = prima equazione in x e y
-@PARAM eq2 = seconda equazione in x e y *)
+@PARAM eq2 = seconda equazione in x e y
+Esempio: usata nella seconda slide dei sistemi lineari *)
 plotLinearSystem2[eq1_, eq2_] := Module[{solutions, points},
 	(* calcola le soluzioni *)
 	solutions = Solve[{eq1,eq2}];
@@ -133,7 +137,8 @@ plotLinearSystem2[eq1_, eq2_] := Module[{solutions, points},
 di un sistema di tre equazioni di primo grado in tre incognite;
 @PARAM eq1 = prima equazione in x, y e z
 @PARAM eq2 = seconda equazione in x, y e z
-@PARAM eq3 = terza equazione in x, y e z *)
+@PARAM eq3 = terza equazione in x, y e z
+Esempio: usata nella terza slide dei sistemi lineari *)
 plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 	(* calcola le soluzioni *)
 	sols = Solve[{eq1,eq2,eq3}];
@@ -152,7 +157,8 @@ plotLinearSystem3[eq1_,eq2_,eq3_] := Module[{sols, points},
 (* Mostra l'esercizio in cui viene visualizzato un sistema di equazioni (eventualmente random) e l'utente deve trasformarlo nella matrice associata
 @PARAM inputSystem = eventuale sistema di equazioni in input
 @PARAM result = indica lo step successivo dell'esercizio finale
-- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento
+Esempio: usata nell'esercizio di trasposizione da sistema a matrice e nella verifica finale di Gauss *)
 exerciseSystemToMatrix[inputSystem_:Null,result_:0] := DynamicModule[
 	{rowCount, colCount, checkButtonSystemToMatrix, restartButton, gridOptions, system, inputMatrixShown, matrix, inputMatrix,
 	okColor=RGBColor[0,1,0,0.4], wrongColor=RGBColor[1,0,0,0.4], shown=False, dialogImage, dialogText, output},
@@ -226,7 +232,8 @@ SetAttributes[exerciseSystemToMatrix,HoldRest];
 @PARAM finalExercise = indica se la funzione viene eseguita come passo dell'esercizio finale o meno
 @PARAM result = indica lo step successivo dell'esercizio finale
 @PARAM oldResult = indica lo step precedente dell'esericizio finale
-- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento
+Esempio: usata nell'esercizio da matrice a matrice ridotta e nella verifica finale di Gauss *)
 exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_:0] := DynamicModule[
 	{systemMatrix, rows, cols, A, b, L, U, P, newB, UFlattened, shown=False, okColor=RGBColor[0,1,0,0.4],
 	wrongColor=RGBColor[1,0,0,0.4], inputMatrix, inputMatrixShown, dialogImage, dialogText, checkButtonTriangular, restartButton, gridOptions, output},
@@ -234,9 +241,9 @@ exerciseTriangularizeMatrix[system_, finalExercise_:False, result_:0, oldResult_
 	(* ricava la matrice completa associata al sistema e le sue dimensioni *)
 	systemMatrix = transformToMatrix[system,True];
 	{rows,cols} = calculateMatrixDims[system];
-	(* ricava la matrice dei coefficienti *)
+	(* ricava la matrice dei coefficienti attraverso la Drop che toglie l'ultima colonna *)
 	A = Drop[systemMatrix, None, -1];
-	(* ricava il vettore dei termini noti *)
+	(* ricava il vettore dei termini noti attraverso la Take che prende l'ultima colonna *)
 	b = Take[systemMatrix, All, -1];
 	(* applica la fattorizzazione LU su A e b *)
 	{L,U,P,newB} = fattorizzazioneLU[A,b];
@@ -315,7 +322,8 @@ SetAttributes[exerciseTriangularizeMatrix, HoldRest];
 @PARAM system = eventuale sistema in input
 @PARAM result = indica lo step successivo dell'esercizio finale
 @PARAM oldResult = indica lo step precedente dell'esericizio finale
-- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento
+Esempio: usata nell'esercizio di scrittura delle equazioni a partire dalla matrice ridotta e nella verifica finale di Gauss *)
 exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicModule[
 	{reducedMatrix, inputSystem, inputSystemShown, randomSystem, A, b, U, L, P, newB, matrix, rows, checkButtonReduced, cols, systemToCheck, output,
 	okColor=RGBColor[0,1,0,0.4], wrongColor = RGBColor[1,0,0,0.4], shown = False,matrixToCheck, restartButton, gridOptions, dialogImage, dialogText},
@@ -404,12 +412,18 @@ exerciseReducedMatrixToSystem[system_:Null,result_:0, oldResult_:0] := DynamicMo
 ];
 SetAttributes[exerciseReducedMatrixToSystem, HoldRest];
 
-(* Funzione che mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo *)
+(* Funzione che mostra l'esercizio finale in cui l'utente inserisce un sistema di equazioni e applica il Metodo di Gauss passo per passo
+Esempio: usata nella slide della verifica finale di Gauss *)
 exerciseFinalGauss[] := DynamicModule[
 	{inputList = {}, startButton, restartButton, step=0, out, oldStep=0},
 
 	(* crea i pulsanti per iniziare l'esercizio o per ricominciare *)
-	startButton = Dynamic[Button[Style["Inizia!",20], stringInputToSystem[inputList]; step=1, Enabled->If[step!=0,False,True],ImageSize->{180,40}]];
+	startButton = Dynamic[Button[Style["Inizia!",20],
+		If[checkInputFormat[inputList[[1]]],
+			stringInputToSystem[inputList]; step=1,
+			MessageDialog[Column[{Import["images/error.png"],Style["C'\[EGrave] un errore nel sistema inserito.\nPuoi scrivere lettere, numeri, spazi, le operazioni fondamentati (+, -, *, /), l'uguale e la virgola.", 18, TextAlignment->Left]},
+				Spacings->{2,4}, Alignment->Center, Frame->All, FrameStyle->RGBColor[0,0,0,0], ItemSize->Fit]];step=0
+		], Enabled->If[step!=0,False,True],ImageSize->{180,40}]];
 	restartButton = Button[Style["Ricomincia",20], inputList = {}; step=0,ImageSize->{180,40}];
 
 	(* mostra la grid dinamica che cambia contenuto in base al passo corrente dell'esercizio (in base all'opportuna chiamata fatta nello switch);
@@ -445,12 +459,15 @@ exerciseFinalGauss[] := DynamicModule[
 @PARAM system = sistema di equazioni dato in input
 @PARAM result = indica lo step successivo dell'esercizio finale
 @PARAM oldResult = indica lo step precedente dell'esericizio finale
-- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento *)
+- viene applicata la HoldRest per mantenere gli ultimi parametri non valutati e simulare un passaggio per riferimento
+Esempio: usata nella verifica finale di Gauss *)
 finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
 	{solutions, lhss, variables, answer, answers={}, randomAnswer, radioAnswers, choice, checkButton, gridOptions, i, k, dialogImage, dialogText},
 
 	(* calcola la soluzione reale *)
 	solutions = Solve[system];
+	(* attraverso Level[#, 1][[1]] e la relativa Map (/@), prendo tutte le parti a sinistra dell'uguale di ogni equazione del sistema *)
+	(* per poter estrapolarne le incognite con la builtin Variables *)
 	lhss = Level[#, 1][[1]]& /@ system;
 	variables = Variables[lhss];
 	answer = StandardForm[#] == (# /. solutions[[1]])& /@ variables;
@@ -493,7 +510,8 @@ finalExerciseRandomAnswers[system_, result_:0, oldResult_:0] := DynamicModule[
 SetAttributes[finalExerciseRandomAnswers, HoldRest];
 
 (* Funzione che si occupa di concludere l'esercizio finale, ricavando e mostrando la risposta corretta;
-@PARAM system = sistema di equazioni utilizzate nell'esercizio *)
+@PARAM system = sistema di equazioni utilizzate nell'esercizio
+Esempio: usata nella verifica finale di Gauss *)
 finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer, gridOptions,coeffMatrix},
 	(* calcola le soluzioni e ricava la matrice dei coefficienti *)
 	solutions = Solve[system];
@@ -518,7 +536,8 @@ finalExerciseFoundAnswer[system_] := Module[{solutions, lhss, variables, answer,
 	]
 ];
 
-(* Data una matrice generata random viene richiesto all'utente di selezionarne la diagonale*)
+(* Data una matrice generata random viene richiesto all'utente di selezionarne la diagonale
+Esempio: usata nella funzione questionsExercise *)
 diagonalMatrixQuestion[]:= Module[{index, randomElements,matrix, answers,solution,wrongAnswers,text, gridOptions},
 	text = "Quale tra queste \[EGrave] la diagonale della seguente matrice ?";
 	(*Generazione grandezza matrice, elementi, risposte errate e soluzioni*)
@@ -533,7 +552,8 @@ diagonalMatrixQuestion[]:= Module[{index, randomElements,matrix, answers,solutio
 	Return[{text,answers,solution,matrix}]
 ];
 
-(*Funzione che data una matrice di grandezza casuale richiede all'utente quale delle due indica la colonna o la riga*)
+(*Funzione che data una matrice di grandezza casuale richiede all'utente quale delle due indica la colonna o la riga
+Esempio: usata nella funzione questionsExercise *)
 rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 	(*Generazione di una matrice non quadrata e della soluzione casuale tra riga e colonna*)
 	index = RandomSample[Range[4,6],2];
@@ -550,7 +570,8 @@ rowColumnQuestion[]:= Module[{index,row,column,matrix,answers,text,solution},
 	Return[{text,answers,solution, Null}]
 ];
 
-(*Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore*)
+(*Domanda: Indentificare un elemento di una matrice, dato l'indice o il valore
+Esempio: usata nella funzione questionsExercise *)
 indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,text,element,
 						answers,wrongAnswersRow,wrongAnswersColumn,wrongAnswers, ind, subscriptIndex},
 	(*Generazione matrice di grandezza casuale e scelta casuale di una posizione*)
@@ -580,7 +601,8 @@ indexQuestion[]:=Module[{index,row,column,position,matrixRandom,matrix,solution,
 	Return[{text,answers,solution,matrix}]
 ];
 
-(*Domanda che richiede all'utente la caratteristia chiave delle matrici identit\[AGrave]*)
+(*Domanda che richiede all'utente la caratteristia chiave delle matrici identit\[AGrave]
+Esempio: usata nella funzione questionsExercise *)
 identityMatrixQuestion[]:=Module[{text,solution,wrongAnswers,answers},
 	text = "La matrice identit\[AGrave] presenta degli elementi diversi da zero:";
 	solution = "Nella diagonale";
@@ -590,7 +612,8 @@ identityMatrixQuestion[]:=Module[{text,solution,wrongAnswers,answers},
 	Return[{text,answers,solution,Null}]
 ];
 
-(*Domanda che richiede all'utente quale matrice possiede una diagonale *)
+(*Domanda che richiede all'utente quale matrice possiede una diagonale
+Esempio: usata nella funzione questionsExercise *)
 haveDiagonalQuestion[]:= Module[{text,solution,wrongAnswers,answers},
 	text = "Quale delle seguenti matrici possiede una DIAGONALE ?";
 	solution = "Matrice quadrata";
@@ -600,7 +623,8 @@ haveDiagonalQuestion[]:= Module[{text,solution,wrongAnswers,answers},
 	Return[{text,answers,solution,Null}]
 ];
 
-(*Funzione che sceglie random le domande a risposta multipla e ne gestisce la relativa stampa sul Notebook*)
+(*Funzione che sceglie random le domande a risposta multipla e ne gestisce la relativa stampa sul Notebook
+Esempio: usata nella slide dell'esercizio sulle domande di teoria *)
 questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioAnswers,choice,checkButton,
 									restartButton,gridOptions, appearance,dialogImage,dialogText},
 	(*Viene scelta la domanda random*)
@@ -654,7 +678,8 @@ questionsExercise[]:=DynamicModule[{question,text,answers,solution,matrix,radioA
 (* FUNZIONI D'APPOGGIO *)
 
 (* Funzione che data in input una lista di equazione la visualizza sotto forma di sistema;
-@PARAM eqs = lista di equazioni (espressioni) *)
+@PARAM eqs = lista di equazioni (espressioni) 
+Esempio: usata in tutte le slide in cui va mostrato un sistema lineare *)
 displayEquationSystem[eqs_] := Module[{eqsFF},
 	(* applica prima HoldForm e poi TraditionalForm a ogni equazione *)
 	eqsFF = TraditionalForm /@ HoldForm /@ eqs;
@@ -663,7 +688,8 @@ displayEquationSystem[eqs_] := Module[{eqsFF},
 ];
 
 (* Funzione che permette di evidenziare gli elementi di una matrice;
-@PARAM matrix = matrice da evidenziare *)
+@PARAM matrix = matrice da evidenziare
+Esempio: usata in tutte le slide in cui si evidenziano i coefficienti ed i termini noti di una matrice completa *)
 highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
 	lastCol = 1;
 	(* calcola numero massimo di colonne *)
@@ -678,7 +704,8 @@ highlightMatrixElements[matrix_]:= Module[{lastCol,editedMatrix},
 ];
 
 (* Funzione che restituisce la dimensioni (righe, colonne) di una matrice, a partire da un sistema;
-@PARAM system = sistema di equazioni da cui ricavare la matrice *)
+@PARAM system = sistema di equazioni da cui ricavare la matrice
+Esempio: usata nelle funzioni degli esercizi *)
 calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
 	rows = Length[system];
 	(* per ogni equazione, considera la parte senza termine noto *)
@@ -690,7 +717,8 @@ calculateMatrixDims[system_] := Module[{rows,cols,lhsParts},
 
 (* Funzione che prende in input un sistema di equazioni e restituisce la matrice associata;
 @PARAM eqs = lista di equazioni (espressioni)
-@PARAM withTerms = indica se le equazioni hanno termini noti *)
+@PARAM withTerms = indica se le equazioni hanno termini noti
+Esempio: usata nelle funzioni degli esercizi ed in alcune slide in cui si mostra la matrice associata ad un sistema *)
 transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,incognite,rules,i,j,key},
 	If[withTerms,
 		(* se withTerms = True, si ricavano i termini noti e la parte dell'equazione senza di essi *)
@@ -726,7 +754,8 @@ transformToMatrix[eqs_,withTerms_:False] := Module[{system,matrix,terms,row,inco
 ];
 
 (* Restituisce un sistema random tra quelli presenti. Funzione utilizzata negli esercizi;
-@PARAM solvable = permette di discrimiare tra sistemi risolvibili o anche non risolvibili *)
+@PARAM solvable = permette di discrimiare tra sistemi risolvibili o anche non risolvibili 
+Esempio: usata nelle funzioni degli esercizi *)
 getRandomSystem[solvable_:True] := Module[{systems},
 	(* definisce una lista di sistemi risolvibili *)
 	systems = {
@@ -770,7 +799,8 @@ getRandomSystem[solvable_:True] := Module[{systems},
 (* Funzione che garantisce la presenza di un unico elemento in una lista;
 @PARAM list = lista che deve contenere un solo elemento
 @PARAM element = elemento da inserire
-- viene usato HoldAll per non valutare i parametri e simulare un passaggio per riferimento *)
+- viene usato HoldAll per non valutare i parametri e simulare un passaggio per riferimento
+Esempio: usata nella funzione dell'esercizio finale di Gauss *)
 oneElementList[list_, element_] := Module[{},
 	(* se list ha gi\[AGrave] un elemento viene resettata *)
 	If[Not[SameQ[list, {}]], list = {}];
@@ -781,7 +811,8 @@ SetAttributes[oneElementList, HoldAll];
 
 (* Funzione che manipola una stringa di equazioni separate da virgola e le trasforma in equazioni valutabili
 @PARAM list = lista di equazioni da manipolare
-- viene usato HoldAll per non valutare il parametro e simulare un passaggio per riferimento *)
+- viene usato HoldAll per non valutare il parametro e simulare un passaggio per riferimento
+Esempio: usata nella funzione dell'esercizio finale di Gauss *)
 stringInputToSystem[list_] := Module[{},
 	(* per ogni equazione, trasforma il singolo = in quello doppio necessario per Mathematica *)
 	list = StringReplace[#,"="->"\[Equal]"]& @ list;
@@ -789,6 +820,18 @@ stringInputToSystem[list_] := Module[{},
 	list = ToExpression @ Flatten @ StringSplit[#, ","] & @ list;
 ];
 SetAttributes[stringInputToSystem, HoldAll];
+
+(* Funzione che si occupa di controllare il formato del sistema inserito nell'esercizio finale
+@PARAM stringInput = sistema di equazioni scritto dall'utente sotto forma di stringa
+Esempio: usata nella funzione dell'esercizio finale di Gauss *)
+checkInputFormat[stringInput_] := Module[{inputChars, allowedChars},
+	inputChars = Characters[stringInput];
+	allowedChars = CharacterRange["a", "z"];
+	allowedChars = Join[allowedChars, CharacterRange["A", "Z"]];
+	allowedChars = Join[allowedChars, CharacterRange["0", "9"]];
+	allowedChars = Join[allowedChars, {"+", "-", "*", "/", ",", " ", "="}];
+	Return[AllTrue[inputChars, MemberQ[allowedChars, #] &]];
+];
 
 End[];
 Protect["GaussLinearSystemsPackage`*"]
